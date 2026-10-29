@@ -112,6 +112,15 @@ describe('host apply', () => {
     await expect(response.json()).resolves.toEqual({ state: 'idle' })
   })
 
+  it('ignores a stale DSH_PROFILE that is not present under the home', async () => {
+    const test = await harness()
+    vi.stubEnv('DSH_PROFILE', 'stale-profile')
+    apply(test.ctx, { discoverSiblingHomes: false })
+    const body = await callList(test.routes)
+    expect(body.current).toBeNull()
+    expect(test.logger.warn).toHaveBeenCalled()
+  })
+
   it('reports a missing connection registry instead of throwing', async () => {
     const test = await harness({ withConnection: false })
     expect(() => apply(test.ctx, { discoverSiblingHomes: false })).not.toThrow()

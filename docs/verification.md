@@ -34,6 +34,35 @@ npm pack --dry-run
 | Artifact        | Loader id, module requests, three registrations, Host exports                                       | `scripts/smoke-client.mjs`           |
 | Package         | Manifest, exports, files, patch row, locale metadata, icon, wrapper id                              | `scripts/check-package.mjs`          |
 
+## Isolated Host smoke (no user state)
+
+The Host half can be exercised against a temporary `DSH_HOME` without touching a real
+profile. This was verified with the bundled CLI `0.2.1-rc.3` on 2026-10-30: routes returned
+401 without a cookie, 200 with the session cookie, 403 for a foreign Origin; `open` returned
+202, `status` reached `ready` with a launch URL, `stop` returned `stopped: true`, and no
+process or listener remained afterwards.
+
+```bash
+export DSH_HOME=$(mktemp -d)
+dsh --profile probe --from-default-profile web --dump-config
+dsh plugin --profile probe add "$PWD"
+dsh --profile probe --no-open --port 0 &          # prints "dsh web: <url>"
+# Authenticate with the printed URL, then:
+curl -i "$ORIGIN/api/profile-switcher/list"                          # 401 without cookie
+curl -sS -L -c jar -b jar -o /dev/null "$PRINTED_URL"                # mint the cookie
+curl -s -b jar "$ORIGIN/api/profile-switcher/list"                   # 200, no launch URL
+curl -s -b jar -H 'Origin: https://evil.example'   -o /dev/null -w '%{http_code}' "$ORIGIN/api/profile-switcher/list"  # 403
+curl -s -b jar -H 'content-type: application/json' \
+  -d "{\"home\":\"$DSH_HOME\",\"name\":\"probe\"}" \
+  "$ORIGIN/api/profile-switcher/open"                                # 202 starting
+# Poll /status until ready, then POST /stop and confirm {"stopped":true}.
+kill %1
+rm -rf "$DSH_HOME"
+```
+
+`--from-default-profile` writes only inside the temporary home; the plugin is installed there
+with a `link:` to this checkout. Do not point it at a real `DSH_HOME`.
+
 ## Manual Desktop matrix
 
 Environment: DSH Desktop 0.2.1-rc.3 (record the exact build), macOS; repeat the window-chrome

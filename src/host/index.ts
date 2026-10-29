@@ -101,11 +101,23 @@ export function apply(ctx: HostContext, rawConfig?: unknown): void {
     exists: (path) => existsSync(path),
     readdir: (path) => readdirSync(path, { withFileTypes: true }),
   })
-  const currentProfile = detectCurrentProfile({
+  const files = createProfileFiles()
+  const detectedProfile = detectCurrentProfile({
     env: process.env,
     argv: process.argv,
     profilesDir: join(currentHome, 'profiles'),
   })
+  // A stale DSH_PROFILE can leak in from a parent shell; only trust it when the
+  // profile actually exists under the home this Host serves.
+  const currentProfile =
+    detectedProfile !== null && files.hasProfile(currentHome, detectedProfile)
+      ? detectedProfile
+      : null
+  if (detectedProfile !== null && currentProfile === null) {
+    logger.warn(
+      `detected profile ${JSON.stringify(detectedProfile)} is not present under ${currentHome}; ignoring it`,
+    )
+  }
   const launcher = resolveLauncher(
     {
       env: process.env,
@@ -119,7 +131,6 @@ export function apply(ctx: HostContext, rawConfig?: unknown): void {
     config,
   )
 
-  const files = createProfileFiles()
   const supervisor = new ProfileSupervisor({
     currentHome,
     currentProfile,
