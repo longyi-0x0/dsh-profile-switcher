@@ -34,6 +34,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
       - name: Verify the committed artifacts are current
+        if: runner.os == 'Linux'
         shell: bash
         run: git diff --exit-code -- lib
       - name: Verify the packed file list

@@ -4,6 +4,7 @@
   "description": "Switch DeepSeek Harness profiles from the sidebar and embed another profile's Web UI full-screen in the current window.",
   "license": "MIT",
   "type": "module",
+  "main": "./lib/index.js",
   "author": "longyi",
   "homepage": "https://github.com/longyi/dsh-profile-switcher#readme",
   "repository": {
@@ -77,7 +78,7 @@
     "test:watch": "vitest",
     "smoke": "node scripts/smoke-client.mjs",
     "check:package": "node scripts/check-package.mjs",
-    "check": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build && pnpm run smoke && pnpm run check:package"
+    "check": "pnpm run typecheck && pnpm run format:check && pnpm run lint && pnpm run test && pnpm run build && pnpm run smoke && pnpm run check:package"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",
