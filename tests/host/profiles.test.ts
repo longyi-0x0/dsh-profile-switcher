@@ -1,7 +1,8 @@
+import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { listProfileDirectories, type ProfileDirectoryEntry } from '../../src/host/profiles'
 
-const PROFILES = '/Users/tester/.dsh/profiles'
+const PROFILES = resolve('/Users/tester/.dsh/profiles')
 
 function entry(name: string, directory = true): ProfileDirectoryEntry {
   return { name, isDirectory: () => directory }
@@ -28,10 +29,10 @@ function deps(options: {
 describe('listProfileDirectories', () => {
   it('lists directories that own a package.json, sorted by name', () => {
     const manifests = {
-      [`${PROFILES}/web/package.json`]: JSON.stringify({
+      [join(PROFILES, 'web', 'package.json')]: JSON.stringify({
         dsh: { profile: { bundles: ['a', 'b'] } },
       }),
-      [`${PROFILES}/desktop/package.json`]: JSON.stringify({
+      [join(PROFILES, 'desktop', 'package.json')]: JSON.stringify({
         dsh: { profile: { bundles: ['a'] } },
       }),
     }
@@ -49,7 +50,7 @@ describe('listProfileDirectories', () => {
   })
 
   it('keeps a malformed manifest as a profile with zero bundles', () => {
-    const path = `${PROFILES}/web/package.json`
+    const path = join(PROFILES, 'web', 'package.json')
     const result = listProfileDirectories(
       PROFILES,
       deps({ entries: [entry('web')], manifests: { [path]: '{not json' } }),
@@ -62,14 +63,14 @@ describe('listProfileDirectories', () => {
       PROFILES,
       deps({
         entries: [entry('web'), entry('no manifest'), entry('-bad'), entry('has space')],
-        manifests: { [`${PROFILES}/web/package.json`]: '{}' },
+        manifests: { [join(PROFILES, 'web', 'package.json')]: '{}' },
       }),
     )
     expect(result).toEqual([{ name: 'web', bundles: 0 }])
   })
 
   it('includes the manifest mtime when available', () => {
-    const path = `${PROFILES}/web/package.json`
+    const path = join(PROFILES, 'web', 'package.json')
     const result = listProfileDirectories(
       PROFILES,
       deps({
@@ -94,7 +95,7 @@ describe('listProfileDirectories', () => {
   })
 
   it('counts bundles only when the manifest declares an array', () => {
-    const path = `${PROFILES}/web/package.json`
+    const path = join(PROFILES, 'web', 'package.json')
     const result = listProfileDirectories(
       PROFILES,
       deps({

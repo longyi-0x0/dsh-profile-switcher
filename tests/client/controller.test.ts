@@ -108,6 +108,20 @@ describe('ProfileController', () => {
     expect(store.getSnapshot().menuLoading).toBe(false)
   })
 
+  it('tolerates a listing from an older Host without limits or diagnostics', async () => {
+    const legacy = listing()
+    delete (legacy as Partial<ListResponse>).limits
+    delete (legacy as Partial<ListResponse>).diagnostics
+    const { controller, store } = createHarness({
+      list: async () => legacy,
+    })
+    const limitsBefore = store.getSnapshot().limits
+    await controller.loadProfiles()
+    expect(store.getSnapshot().limits).toEqual(limitsBefore)
+    expect(store.getSnapshot().diagnostics).toEqual([])
+    expect(store.getSnapshot().homes).toHaveLength(1)
+  })
+
   it('opens and closes the menu, focusing only when asked', () => {
     const { controller, store, focusTrigger } = createHarness()
     controller.openMenu({ left: 1, top: 2, bottom: 3 })

@@ -1,4 +1,4 @@
-import { delimiter, join } from 'node:path'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   childEnv,
@@ -8,16 +8,25 @@ import {
   type ResolvedLauncher,
 } from '../../src/host/launcher'
 
-const CLI =
-  '/Applications/DSH.app/Contents/Resources/app.asar/dsh/node_modules/@deepseek-ai/dsh-desktop-host/lib/cli.js'
+const RESOURCES = join('/Applications', 'DSH.app', 'Contents', 'Resources')
+const CLI = join(
+  RESOURCES,
+  'app.asar',
+  'dsh',
+  'node_modules',
+  '@deepseek-ai',
+  'dsh-desktop-host',
+  'lib',
+  'cli.js',
+)
 
 function deps(overrides: Partial<LauncherDeps> = {}): LauncherDeps {
   return {
     env: {},
     platform: 'darwin',
-    execPath: '/Applications/DSH.app/Contents/MacOS/DSH',
+    execPath: join('/Applications', 'DSH.app', 'Contents', 'MacOS', 'DSH'),
     argv: ['node', 'host.js'],
-    resourcesPath: '/Applications/DSH.app/Contents/Resources',
+    resourcesPath: RESOURCES,
     exists: () => false,
     isExecutable: () => false,
     ...overrides,
@@ -43,7 +52,7 @@ describe('resolveLauncher', () => {
       config(),
     )
     expect(launcher?.kind).toBe('desktop-cli')
-    expect(launcher?.command).toBe('/Applications/DSH.app/Contents/MacOS/DSH')
+    expect(launcher?.command).toBe(join('/Applications', 'DSH.app', 'Contents', 'MacOS', 'DSH'))
     expect(launcher?.args).toEqual(['--expose-internals', CLI])
   })
 
@@ -78,7 +87,7 @@ describe('resolveLauncher', () => {
   })
 
   it('falls back to a dsh executable on PATH', () => {
-    const path = ['/usr/local/bin', '/usr/bin'].join(delimiter)
+    const path = ['/usr/local/bin', '/usr/bin'].join(':')
     const launcher = resolveLauncher(
       deps({
         env: { PATH: path },

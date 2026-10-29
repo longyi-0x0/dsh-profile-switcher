@@ -81,16 +81,18 @@ export class ProfileController {
     try {
       const payload = await this.deps.api.list()
       if (this.disposed || token !== this.listSequence) return
-      const currentHome = payload.homes.find((home) => home.current) ?? null
+      const homes = Array.isArray(payload.homes) ? payload.homes : []
+      const currentHome = homes.find((home) => home.current) ?? null
       const currentProfile = currentHome?.profiles.find((profile) => profile.current) ?? null
       this.deps.store.update({
-        homes: payload.homes,
-        canLaunch: payload.canLaunch,
+        homes,
+        canLaunch: payload.canLaunch !== false,
         currentName: currentProfile?.name ?? '',
         currentHome: currentHome?.path ?? null,
         launcherKind: payload.launcher?.kind ?? null,
-        diagnostics: payload.diagnostics,
-        limits: payload.limits,
+        // Tolerate a listing from an older Host version during a live update.
+        diagnostics: Array.isArray(payload.diagnostics) ? payload.diagnostics : [],
+        limits: payload.limits ?? this.state.limits,
         menuLoading: false,
         menuError: null,
       })
