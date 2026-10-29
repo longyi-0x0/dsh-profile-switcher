@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Profile Switcher",
+    "description": "Lists DeepSeek Harness profiles in the sidebar and opens another profile's Web UI in the browser."
+  }
+}

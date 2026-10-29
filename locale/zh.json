@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "配置切换",
+    "description": "在侧边栏列出所有 Harness 配置（profile），一键在浏览器中打开另一个配置的完整界面。"
+  }
+}

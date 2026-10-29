@@ -1,0 +1,3 @@
+- insert:
+    - id: profile-switcher
+      name: 'dsh-profile-switcher'

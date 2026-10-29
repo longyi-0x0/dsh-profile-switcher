@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>dsh-profile-switcher 内嵌切换 UI</title>
+<style>
+:root{--bg:#f4f4f5;--panel:#fff;--line:#e4e4e7;--line2:#d4d4d8;--text:#18181b;--muted:#71717a;--brand:#2563eb;--ok:#16a34a;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:-apple-system,"PingFang SC","Segoe UI",sans-serif;color:var(--text);}
+.stage{width:1440px;padding:34px 40px 28px;}
+.head{display:flex;align-items:baseline;gap:14px;margin-bottom:22px}
+.head h1{font-size:22px;margin:0;font-weight:650}
+.head p{margin:0;color:var(--muted);font-size:12.5px}
+.grid{display:grid;grid-template-columns:640px 1fr;gap:32px;align-items:start}
+.label{font-size:11.5px;color:var(--muted);margin:0 0 9px;display:flex;gap:8px;align-items:center}
+.label b{color:var(--text);font-size:12.5px}
+.frame{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.06);overflow:hidden}
+.win{height:512px;display:flex;flex-direction:column}
+.titlebar{height:32px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:0 12px;background:#fafafa;font-size:10.5px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:#e4e4e7}
+.shell{flex:1;display:flex;min-height:0}
+.side{width:212px;border-right:1px solid var(--line);padding:12px 10px 12px;display:flex;flex-direction:column;gap:8px;position:relative;background:#fbfbfc}
+.brand{display:flex;align-items:center;gap:7px;padding:4px 2px;position:relative}
+.brand .mark{width:22px;height:22px;border-radius:50%;background:#111;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
+.brand .word{font-weight:600;font-size:11.5px;letter-spacing:.02em}
+.trigger{display:flex;align-items:center;gap:5px;padding:4px 7px;border-radius:6px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:10px;font-weight:650;letter-spacing:.12em;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.trigger .chev{font-size:8px;color:var(--muted)}
+.menu{margin-top:5px;border:1px solid var(--line);border-radius:10px;background:#fff;box-shadow:0 14px 36px rgba(0,0,0,.13);padding:6px;font-size:12px}
+.menu .mhead{padding:3px 8px 5px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.home{display:flex;align-items:center;gap:6px;margin:7px 8px 2px;font-size:10px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+.row{display:flex;align-items:center;gap:8px;padding:5.5px 8px;border-radius:6px}
+.row:hover{background:#f4f4f5}
+.row .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{padding:0 6px;border:1px solid var(--brand);border-radius:999px;color:var(--brand);font-size:9.5px}
+.meta{font-size:10px;color:var(--muted)}
+.dotok{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.spin{width:11px;height:11px;border:2px solid #e4e4e7;border-top-color:var(--brand);border-radius:50%;animation:s 1s linear infinite;flex:none}
+@keyframes s{to{transform:rotate(360deg)}}
+.menu .hint{padding:6px 8px 2px;font-size:9.5px;color:var(--muted);border-top:1px solid var(--line);margin-top:4px}
+.side .spacer{flex:1}
+.rest{opacity:.5;font-size:10px;color:var(--muted);display:flex;flex-direction:column;gap:8px;padding:4px 4px}
+.bar{height:7px;border-radius:4px;background:#ececee}
+.bar.w70{width:70%}.bar.w45{width:45%}
+.content{flex:1;padding:16px 20px;min-width:0}
+.crumb{font-size:10.5px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.title{font-size:14px;font-weight:600;margin:9px 0 16px}
+.bubble{border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:11.5px;color:#3f3f46;max-width:90%;line-height:1.65}
+.bubble.user{margin-left:auto;background:#eff6ff;border-color:#dbeafe;margin-top:12px}
+/* right */
+.win2{height:512px;position:relative;background:#0b0e14;overflow:hidden}
+.embed{position:absolute;inset:0;display:flex}
+.eside{width:170px;background:#0f131b;border-right:1px solid #1f2633;padding:14px 12px;display:flex;flex-direction:column;gap:9px}
+.ebrand{display:flex;align-items:center;gap:7px;color:#e6e8eb;font-size:10.5px;font-weight:700;letter-spacing:.08em}
+.ebrand .m{width:19px;height:19px;border-radius:6px;background:#1d4ed8;display:grid;place-items:center;font-size:9px}
+.nav{height:7px;border-radius:4px;background:#1a2130}
+.nav.w70{width:70%}.nav.w88{width:88%}.nav.w55{width:55%}
+.emain{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.etop{display:flex;align-items:center;gap:9px}
+.sym{color:#e6e8eb;font-size:15px;font-weight:700}
+.price{color:#22c55e;font-size:12px}
+.chips{display:flex;gap:5px;margin-left:auto}
+.chip{font-size:9px;color:#9aa4b2;border:1px solid #26303f;border-radius:999px;padding:2px 7px}
+.chart{flex:1;border:1px solid #1c2432;border-radius:8px;position:relative;overflow:hidden;background:linear-gradient(180deg,#0d1119,#0a0d13)}
+.gridlines{position:absolute;inset:0;background-image:linear-gradient(#151b26 1px,transparent 1px),linear-gradient(90deg,#151b26 1px,transparent 1px);background-size:100% 32px, 56px 100%;opacity:.5}
+.candles{position:absolute;left:20px;right:20px;bottom:22px;top:34px;display:flex;align-items:flex-end;gap:6px}
+.c{width:8px;position:relative;border-radius:1px}
+.c.up{background:#22c55e}.c.down{background:#ef4444}
+.c:after{content:"";position:absolute;left:3.5px;width:1px;background:inherit;top:-12px;bottom:-7px;opacity:.65}
+.tbl{display:flex;gap:8px;font-size:9px;color:#7c8798}
+.back{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;height:30px;padding:0 12px;border-radius:999px;background:rgba(24,24,27,.86);border:1px solid rgba(255,255,255,.16);color:#f4f4f5;font-size:11.5px;box-shadow:0 8px 24px rgba(0,0,0,.4);backdrop-filter:blur(8px)}
+.back .arr{font-size:12px}
+.back .who{color:#a1a1aa}
+.ghost{position:absolute;top:12px;right:12px;height:30px;padding:0 11px;border-radius:999px;background:rgba(24,24,27,.78);border:1px solid rgba(255,255,255,.16);color:#d4d4d8;font-size:10.5px;display:flex;align-items:center;gap:5px}
+.notes{margin-top:13px;display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11.5px;color:#52525b;line-height:1.6}
+.notes b{color:#18181b}
+.statebar{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.state{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:9px;font-size:11.5px;color:#3f3f46;min-width:212px}
+.state .k{display:block;font-size:9.5px;color:var(--muted);margin-bottom:1px}
+.state .spin{width:10px;height:10px}
+.errbox{border-color:#fecaca;background:#fef2f2;color:#991b1b}
+.foot{margin-top:18px;font-size:10.5px;color:var(--muted)}
+</style></head>
+<body><div class="stage">
+<div class="head"><h1>dsh-profile-switcher · 内嵌 profile 切换</h1><p>入口在品牌名 → 选中后全屏覆盖另一个 profile 的 Harness，左上角返回</p></div>
+<div class="grid">
+  <div>
+    <div class="label"><b>① 入口与列表</b><span>点击品牌名旁的 HARNESS ▾</span></div>
+    <div class="frame"><div class="win">
+      <div class="titlebar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:8px">DeepSeek Harness</span></div>
+      <div class="shell">
+        <div class="side">
+          <div class="brand"><span class="mark">D</span><span class="word">deepseek</span><span class="trigger">HARNESS <span class="chev">▾</span></span></div>
+          <div class="menu">
+            <div class="mhead">切换配置</div>
+            <div class="home">~/.dsh</div>
+            <div class="row"><span class="name">desktop</span><span class="badge">当前</span></div>
+            <div class="row"><span class="name">surfcore</span><span class="meta">打开</span></div>
+            <div class="row"><span class="name">web</span><span class="meta">打开</span></div>
+            <div class="row"><span class="name">work</span><span class="meta">打开</span></div>
+            <div class="home">~/.dsh-trading</div>
+            <div class="row"><span class="name">trading-web</span><span class="dotok"></span><span class="meta">运行中</span></div>
+            <div class="hint">选中后全屏打开；左上角可返回</div>
+          </div>
+          <div class="spacer"></div>
+          <div class="rest"><div class="bar w70"></div><div class="bar w45"></div><div class="bar w70"></div></div>
+        </div>
+        <div class="content">
+          <div class="crumb">会话 <span>·</span> ds-worktable</div>
+          <div class="title">开发切换 profile 插件</div>
+          <div class="bubble">这个插件的位置换一下吧，放在什么地方比较好？</div>
+          <div class="bubble user">可以放在点击头像出现的菜单里吗？</div>
+        </div>
+      </div>
+    </div></div>
+    <div class="notes"><div><b>行状态</b>：当前 / 运行中 / 启动中 spinner / 失败行内提示 + 重试。</div><div><b>键盘</b>：↑↓ 选择，Enter 打开，Esc / 点空白关闭。</div></div>
+  </div>
+  <div>
+    <div class="label"><b>② 打开后：全屏 overlay</b><span>租约 webview 承载目标 profile 的完整 UI</span></div>
+    <div class="frame"><div class="win2">
+      <div class="embed">
+        <div class="eside">
+          <div class="ebrand"><span class="m">T</span> DSH-TRADING</div>
+          <div class="nav w88"></div><div class="nav w70"></div><div class="nav w55"></div><div class="nav w88"></div><div class="nav w70"></div>
+        </div>
+        <div class="emain">
+          <div class="etop"><span class="sym">NVDA</span><span class="price">+2.41%</span><div class="chips"><span class="chip">1D</span><span class="chip">4H</span><span class="chip">1H</span></div></div>
+          <div class="chart"><div class="gridlines"></div><div class="candles"><div class="c up" style="height:69px;margin-bottom:50px"></div><div class="c down" style="height:111px;margin-bottom:105px"></div><div class="c down" style="height:96px;margin-bottom:74px"></div><div class="c up" style="height:35px;margin-bottom:27px"></div><div class="c down" style="height:32px;margin-bottom:53px"></div><div class="c down" style="height:36px;margin-bottom:70px"></div><div class="c down" style="height:82px;margin-bottom:72px"></div><div class="c up" style="height:43px;margin-bottom:80px"></div><div class="c up" style="height:108px;margin-bottom:7px"></div><div class="c up" style="height:101px;margin-bottom:6px"></div><div class="c down" style="height:56px;margin-bottom:109px"></div><div class="c down" style="height:45px;margin-bottom:18px"></div><div class="c down" style="height:97px;margin-bottom:39px"></div><div class="c up" style="height:99px;margin-bottom:23px"></div><div class="c up" style="height:41px;margin-bottom:81px"></div><div class="c down" style="height:52px;margin-bottom:70px"></div><div class="c down" style="height:119px;margin-bottom:7px"></div><div class="c down" style="height:107px;margin-bottom:87px"></div><div class="c up" style="height:96px;margin-bottom:40px"></div><div class="c up" style="height:87px;margin-bottom:58px"></div><div class="c down" style="height:74px;margin-bottom:101px"></div><div class="c up" style="height:51px;margin-bottom:31px"></div><div class="c up" style="height:38px;margin-bottom:67px"></div><div class="c up" style="height:91px;margin-bottom:93px"></div><div class="c down" style="height:85px;margin-bottom:9px"></div><div class="c up" style="height:43px;margin-bottom:21px"></div></div></div>
+          <div class="tbl"><span>VOL 48.8M</span><span>MA20 176.4</span><span>RSI 61.2</span></div>
+        </div>
+      </div>
+      <div class="back"><span class="arr">←</span> 返回默认配置 <span class="who">desktop</span></div>
+      <div class="ghost">在新标签页打开 ↗</div>
+    </div></div>
+    <div class="notes"><div><b>返回胶囊</b>：移除 webview → <code>release(lease)</code> → 回到原界面，宿主应用状态不丢。</div><div><b>为什么 overlay</b>：root 替换会卸载整个应用；全屏覆盖视觉等价且可逆。</div></div>
+  </div>
+</div>
+<div class="statebar">
+  <div class="state"><span class="spin"></span><div><span class="k">启动中</span>菜单立即关闭，全屏 loading「正在启动 trading-web…」</div></div>
+  <div class="state errbox"><div><span class="k">打开失败</span>全屏错误卡片：重试 / 新标签页 / 返回</div></div>
+  <div class="state"><div><span class="k">返回后</span>guest 移除、租约释放，焦点回品牌按钮</div></div>
+</div>
+<div class="foot">Mockup 仅表达布局与状态，颜色取自宿主 --dsw-alias-* 的浅色近似值；实际使用主题变量。</div>
+</div></body></html>
