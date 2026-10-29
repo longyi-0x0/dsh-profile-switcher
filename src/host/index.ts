@@ -20,6 +20,7 @@ import type { HostContext } from './context'
 import { detectCurrentProfile } from './current-profile'
 import { discoverHomes, homeLabel } from './homes'
 import { resolveLauncher } from './launcher'
+import { createScopedLogger } from './logger'
 import { createProcessOperations, type SpawnLike } from './process'
 import { listProfileDirectories } from './profiles'
 import { registerRoutes } from './routes'
@@ -88,8 +89,9 @@ const spawnLike: SpawnLike = (command, args, options) => spawn(command, [...args
  * @param rawConfig - plugin row `config`, validated by `normalizeConfig`.
  */
 export function apply(ctx: HostContext, rawConfig?: unknown): void {
-  const logger = ctx.logger('profile-switcher')
-  const config = normalizeConfig(rawConfig, (message) => logger.warn(message))
+  const baseLogger = ctx.logger('profile-switcher')
+  const config = normalizeConfig(rawConfig, (message) => baseLogger.warn(message))
+  const logger = createScopedLogger(baseLogger, config.logLevel)
 
   const homeDir = homedir()
   const currentHome = harnessHome(process.env, homeDir)
@@ -174,9 +176,7 @@ export function apply(ctx: HostContext, rawConfig?: unknown): void {
   if (currentProfile === null) {
     logger.warn('could not detect the current profile; the current row will be unmarked')
   }
-  if (config.logLevel === 'debug' || config.logLevel === 'info') {
-    logger.info(
-      `ready; homes: ${labels === '' ? '(none)' : labels}; launcher: ${launcher?.kind ?? 'missing'}; routes: ${routesRegistered ? 'registered' : 'unavailable'}`,
-    )
-  }
+  logger.info(
+    `ready; homes: ${labels === '' ? '(none)' : labels}; launcher: ${launcher?.kind ?? 'missing'}; routes: ${routesRegistered ? 'registered' : 'unavailable'}`,
+  )
 }
