@@ -1,0 +1,66 @@
+name: Bug report
+description: Report a defect in dsh-profile-switcher
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste launch URLs, tokens, or unredacted logs. Report security issues through
+        GitHub's private vulnerability reporting instead.
+  - type: input
+    id: dsh-version
+    attributes:
+      label: DeepSeek Harness version
+      description: Desktop or runtime version, for example 0.2.1-rc.3.
+    validations:
+      required: true
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: The installed version or commit.
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Windows
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Desktop app (embedded webview)
+        - dsh web in a browser (new-tab fallback)
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the profile menu
+        2. Select ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and redacted logs
+      description: Use logLevel debug if needed; remove tokens and full URLs.
+    validations:
+      required: true

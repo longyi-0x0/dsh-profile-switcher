@@ -1,24 +1,54 @@
 {
   "name": "dsh-profile-switcher",
   "version": "1.0.0",
-  "private": true,
-  "description": "List DeepSeek Harness profiles in the sidebar and open another profile's Web UI in the browser.",
+  "description": "Switch DeepSeek Harness profiles from the sidebar and embed another profile's Web UI full-screen in the current window.",
   "license": "MIT",
   "type": "module",
+  "author": "longyi",
+  "homepage": "https://github.com/longyi/dsh-profile-switcher#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/longyi/dsh-profile-switcher.git"
+  },
+  "bugs": {
+    "url": "https://github.com/longyi/dsh-profile-switcher/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "profile",
+    "switcher",
+    "webview",
+    "electron"
+  ],
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
-    ".": "./index.js",
-    "./client": "./client.js",
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg",
     "./package.json": "./package.json"
   },
   "files": [
-    "index.js",
-    "client.js",
+    "lib/index.js",
+    "lib/client.js",
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "README.md"
+    "README.md",
+    "README.zh.md",
+    "LICENSE",
+    "NOTICE",
+    "CHANGELOG.md"
   ],
   "dsh": {
     "bundle": {
@@ -28,9 +58,52 @@
       "platform": "web",
       "immediately": true,
       "inject": [
+        "@deepseek-ai/dsh-client-ui-layout",
         "@deepseek-ai/dsh-client-ui-sidebar",
         "@deepseek-ai/dsh-client-locale"
       ]
     }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs --watch",
+    "typecheck": "pnpm run typecheck:host && pnpm run typecheck:client",
+    "typecheck:host": "tsc -p tsconfig.host.json",
+    "typecheck:client": "tsc -p tsconfig.client.json",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke": "node scripts/smoke-client.mjs",
+    "check:package": "node scripts/check-package.mjs",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build && pnpm run smoke && pnpm run check:package"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.8",
+    "@types/node": "22.20.5",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "esbuild": "0.28.2",
+    "eslint": "9.39.5",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "jsdom": "26.1.0",
+    "prettier": "3.9.10",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.1",
+    "vitest": "4.1.12",
+    "yaml": "2.9.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

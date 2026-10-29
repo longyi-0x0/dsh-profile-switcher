@@ -1,0 +1,14 @@
+dsh-profile-switcher
+Copyright (c) 2026 longyi
+
+This product includes SVG path data copied from the DeepSeek Harness client
+primitives package (`@deepseek-ai/dsh-client-ui-primitives`, BrandWordmark),
+Copyright (c) 2026 DeepSeek, licensed under the MIT License. The copied paths
+are used only to keep the sidebar brand wordmark visually identical to the
+host UI; see `src/client/ui/Wordmark.tsx`.
+
+The DeepSeek Harness MIT license text is reproduced in full at
+https://github.com/deepseek-ai/deepseek-harness/blob/main/LICENSE
+
+No DeepSeek trademark rights are granted. "DeepSeek" and "DeepSeek Harness"
+are trademarks of their respective owners.

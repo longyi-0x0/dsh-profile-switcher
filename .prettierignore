@@ -1,0 +1,7 @@
+node_modules/
+lib/
+coverage/
+pnpm-lock.yaml
+docs/mockup.html
+docs/mockup.png
+docs/design/
