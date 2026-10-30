@@ -8,6 +8,7 @@ updates:
     groups:
       development-dependencies:
         dependency-type: development
+        update-types: ['minor', 'patch']
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -15,3 +16,10 @@ updates:
     groups:
       github-actions:
         patterns: ['*']
+        update-types: ['minor', 'patch']
+
+# Major upgrades need a migration (for example TypeScript 7, ESLint 10, React 19,
+# Vitest 5) and are tracked manually instead of opened automatically.
+ignore:
+  - dependency-name: '*'
+    update-types: ['version-update:semver-major']
