@@ -5,14 +5,14 @@
   "license": "MIT",
   "type": "module",
   "main": "./lib/index.js",
-  "author": "longyi",
-  "homepage": "https://github.com/longyi/dsh-profile-switcher#readme",
+  "author": "longyi-0x0",
+  "homepage": "https://github.com/longyi-0x0/dsh-profile-switcher#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/longyi/dsh-profile-switcher.git"
+    "url": "git+https://github.com/longyi-0x0/dsh-profile-switcher.git"
   },
   "bugs": {
-    "url": "https://github.com/longyi/dsh-profile-switcher/issues"
+    "url": "https://github.com/longyi-0x0/dsh-profile-switcher/issues"
   },
   "keywords": [
     "dsh",

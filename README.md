@@ -1,6 +1,6 @@
 # dsh-profile-switcher
 
-[![CI](https://github.com/longyi/dsh-profile-switcher/actions/workflows/ci.yml/badge.svg)](https://github.com/longyi/dsh-profile-switcher/actions/workflows/ci.yml)
+[![CI](https://github.com/longyi-0x0/dsh-profile-switcher/actions/workflows/ci.yml/badge.svg)](https://github.com/longyi-0x0/dsh-profile-switcher/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/dsh-profile-switcher.svg)](https://www.npmjs.com/package/dsh-profile-switcher)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -10,7 +10,7 @@ session.
 
 English | [中文](README.zh.md)
 
-![UI design mockup](https://raw.githubusercontent.com/longyi/dsh-profile-switcher/main/docs/design/mockup.png)
+![UI design mockup](https://raw.githubusercontent.com/longyi-0x0/dsh-profile-switcher/main/docs/design/mockup.png)
 
 > The image is a design mockup, not a screenshot. Replace it with a real capture before
 > announcing the release.
@@ -62,7 +62,7 @@ after changing sources.
 ### From GitHub
 
 ```bash
-dsh plugin --profile desktop add github:longyi/dsh-profile-switcher
+dsh plugin --profile desktop add github:longyi-0x0/dsh-profile-switcher
 ```
 
 ## Use

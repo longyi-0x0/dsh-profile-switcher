@@ -1,6 +1,6 @@
 # dsh-profile-switcher
 
-[![CI](https://github.com/longyi/dsh-profile-switcher/actions/workflows/ci.yml/badge.svg)](https://github.com/longyi/dsh-profile-switcher/actions/workflows/ci.yml)
+[![CI](https://github.com/longyi-0x0/dsh-profile-switcher/actions/workflows/ci.yml/badge.svg)](https://github.com/longyi-0x0/dsh-profile-switcher/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/dsh-profile-switcher.svg)](https://www.npmjs.com/package/dsh-profile-switcher)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -9,7 +9,7 @@
 
 [English](README.md) | 中文
 
-![UI 设计稿](https://raw.githubusercontent.com/longyi/dsh-profile-switcher/main/docs/design/mockup.png)
+![UI 设计稿](https://raw.githubusercontent.com/longyi-0x0/dsh-profile-switcher/main/docs/design/mockup.png)
 
 > 上图为设计稿，不是截图；正式发布前请替换为真实截图。
 
@@ -55,7 +55,7 @@ dsh plugin --profile desktop add /absolute/path/to/dsh-profile-switcher
 ### GitHub
 
 ```bash
-dsh plugin --profile desktop add github:longyi/dsh-profile-switcher
+dsh plugin --profile desktop add github:longyi-0x0/dsh-profile-switcher
 ```
 
 ## 使用
