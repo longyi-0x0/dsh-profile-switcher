@@ -1,7 +1,6 @@
 # dsh-profile-switcher
 
 [![CI](https://github.com/longyi-0x0/dsh-profile-switcher/actions/workflows/ci.yml/badge.svg)](https://github.com/longyi-0x0/dsh-profile-switcher/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/dsh-profile-switcher.svg)](https://www.npmjs.com/package/dsh-profile-switcher)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 在 DeepSeek Harness 侧边栏切换配置（profile），并把另一个配置的完整 Web UI
@@ -36,10 +35,10 @@ Desktop 主进程只启动一个写死的 profile。要使用另一个 profile�
 
 ## 安装
 
-### npm
+### GitHub
 
 ```bash
-dsh plugin --profile desktop add dsh-profile-switcher
+dsh plugin --profile desktop add github:longyi-0x0/dsh-profile-switcher
 ```
 
 ### 本地目录
@@ -52,10 +51,12 @@ dsh plugin --profile desktop add /absolute/path/to/dsh-profile-switcher
 
 `link:` 安装直接使用目录内容，因此安装前或改源码后必须先 `pnpm build`。
 
-### GitHub
+### npm
+
+包已具备发布条件，但尚未发布到 npm；首个 npm 版本发布前请使用 GitHub 或本地目录安装：
 
 ```bash
-dsh plugin --profile desktop add github:longyi-0x0/dsh-profile-switcher
+dsh plugin --profile desktop add dsh-profile-switcher
 ```
 
 ## 使用

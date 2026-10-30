@@ -1,7 +1,6 @@
 # dsh-profile-switcher
 
 [![CI](https://github.com/longyi-0x0/dsh-profile-switcher/actions/workflows/ci.yml/badge.svg)](https://github.com/longyi-0x0/dsh-profile-switcher/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/dsh-profile-switcher.svg)](https://www.npmjs.com/package/dsh-profile-switcher)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Switch between DeepSeek Harness profiles from the sidebar and open another profile's
@@ -40,10 +39,10 @@ full-screen leased webview with one-click return to the default profile.
 
 ## Install
 
-### From npm
+### From GitHub
 
 ```bash
-dsh plugin --profile desktop add dsh-profile-switcher
+dsh plugin --profile desktop add github:longyi-0x0/dsh-profile-switcher
 ```
 
 Restart or reload the profile. The sidebar shows the active profile next to the wordmark.
@@ -59,10 +58,13 @@ dsh plugin --profile desktop add /absolute/path/to/dsh-profile-switcher
 A `link:` install uses the directory as-is, so `lib/` must be built before installing or
 after changing sources.
 
-### From GitHub
+### From npm
+
+The package is publish-ready but not published yet; use GitHub or a local checkout until
+the first npm release:
 
 ```bash
-dsh plugin --profile desktop add github:longyi-0x0/dsh-profile-switcher
+dsh plugin --profile desktop add dsh-profile-switcher
 ```
 
 ## Use
