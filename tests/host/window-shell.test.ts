@@ -1,3 +1,4 @@
+import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import {
   WINDOW_SHELL_NAME,
@@ -48,13 +49,19 @@ describe('resolveWindowShell', () => {
     const onPath = '/usr/local/bin/dsh-profile-window'
     expect(resolveWindowShell(deps({ path: '/usr/local/bin', executable: [onPath] }))).toBe(onPath)
 
-    const built = `${PACKAGE_ROOT}/native-window/target/release/${WINDOW_SHELL_NAME}`
+    const built = join(PACKAGE_ROOT, 'native-window', 'target', 'release', WINDOW_SHELL_NAME)
     expect(resolveWindowShell(deps({ executable: [built] }))).toBe(built)
     expect(resolveWindowShell(deps({}))).toBeNull()
   })
 
   it('appends the Windows executable extension', () => {
-    const built = `${PACKAGE_ROOT}/native-window/target/release/${WINDOW_SHELL_NAME}.exe`
+    const built = join(
+      PACKAGE_ROOT,
+      'native-window',
+      'target',
+      'release',
+      `${WINDOW_SHELL_NAME}.exe`,
+    )
     expect(resolveWindowShell(deps({ platform: 'win32', executable: [built] }))).toBe(built)
   })
 })
