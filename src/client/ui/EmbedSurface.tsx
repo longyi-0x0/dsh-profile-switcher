@@ -142,9 +142,9 @@ export function EmbedSurface() {
           <button
             type="button"
             className={layout.floating ? 'dps-newTab dps-btnFloat' : 'dps-newTab'}
-            onClick={() => controller.openInTab()}
+            onClick={() => controller.openInBrowser()}
           >
-            {message('embed.newTab')}
+            {message('embed.openExternal')}
             <span aria-hidden="true">↗</span>
           </button>
         )}
@@ -183,8 +183,12 @@ export function EmbedSurface() {
                 {message('embed.retry')}
               </button>
               {url === null ? null : (
-                <button type="button" className="dps-ghost" onClick={() => controller.openInTab()}>
-                  {message('embed.newTab')}
+                <button
+                  type="button"
+                  className="dps-ghost"
+                  onClick={() => controller.openInBrowser()}
+                >
+                  {message('embed.openExternal')}
                 </button>
               )}
               <button type="button" className="dps-ghost" onClick={() => controller.returnToApp()}>

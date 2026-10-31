@@ -2,13 +2,22 @@ import {
   API_PREFIX,
   API_VERSION,
   PROFILE_NAME_PATTERN,
+  type CreateProfileResponse,
+  type DeleteProfileResponse,
   type ErrorResponse,
   type ListResponse,
-  type OpenRequest,
+  type ProfileTargetRequest,
   type StatusResponse,
 } from '../shared/protocol'
 import type { HostContext, HostLogger } from './context'
 import { ApiError, isApiError } from './errors'
+import {
+  createProfile,
+  deleteProfile,
+  isCurrentProfile,
+  isReservedProfile,
+  type ProfileAdminDeps,
+} from './profile-admin'
 import { sanitizeDetail } from './redact'
 import type { ProfileFiles, ProfileSupervisor } from './supervisor'
 
@@ -16,6 +25,8 @@ import type { ProfileFiles, ProfileSupervisor } from './supervisor'
 export interface RouteDeps {
   supervisor: ProfileSupervisor
   files: ProfileFiles
+  /** Filesystem seams for creating and deleting profile directories. */
+  admin: ProfileAdminDeps
   currentHome: string
   currentProfile: string | null
   homes: readonly string[]
@@ -98,7 +109,7 @@ function stringField(body: unknown, field: 'home' | 'name'): string | undefined 
 }
 
 /**
- * Register the four plugin routes on the authenticated `/api` carrier.
+ * Register the plugin routes on the authenticated `/api` carrier.
  *
  * @param ctx - Host context.
  * @param deps - supervisor, profile lookup, and current-profile facts.
@@ -167,12 +178,21 @@ export function registerRoutes(ctx: HostContext, deps: RouteDeps): boolean {
   }
 
   /** @param request - POST request. @returns validated open request fields. */
-  const readTarget = async (request: Request): Promise<OpenRequest> => {
+  const readTarget = async (request: Request): Promise<ProfileTargetRequest> => {
     const body = await readJson(request)
     const home = requireHome(stringField(body, 'home'))
     const name = requireName(stringField(body, 'name'))
     requireProfile(home, name)
     return { home, name }
+  }
+
+  /** @param request - POST request. @returns validated home and name without existence rules. */
+  const readAddress = async (request: Request): Promise<ProfileTargetRequest> => {
+    const body = await readJson(request)
+    return {
+      home: requireHome(stringField(body, 'home')),
+      name: requireName(stringField(body, 'name')),
+    }
   }
 
   register('list', ['GET'], 'buffered', async () => {
@@ -211,6 +231,32 @@ export function registerRoutes(ctx: HostContext, deps: RouteDeps): boolean {
     const name = requireName(stringField(body, 'name'))
     const stopped = await deps.supervisor.stop(home, name)
     return json(stopped)
+  })
+
+  register('create', ['POST'], 'streaming', async (request) => {
+    const { home, name } = await readAddress(request)
+    if (isReservedProfile(home, name, deps.currentHome)) {
+      throw new ApiError('profile-reserved', 409)
+    }
+    createProfile(home, name, deps.admin)
+    deps.logger.info(`created profile ${JSON.stringify(name)} in ${home}`)
+    return json({ created: true } satisfies CreateProfileResponse, 201)
+  })
+
+  register('delete', ['POST'], 'streaming', async (request) => {
+    const { home, name } = await readAddress(request)
+    if (!deps.files.hasProfile(home, name)) throw new ApiError('profile-not-found', 404)
+    if (isReservedProfile(home, name, deps.currentHome)) {
+      throw new ApiError('profile-reserved', 409)
+    }
+    if (isCurrentProfile(home, name, deps.currentHome, deps.currentProfile)) {
+      throw new ApiError('profile-is-current', 409)
+    }
+    // The directory owns the server's plugin tree: release the process first.
+    await deps.supervisor.stop(home, name)
+    deleteProfile(home, name, deps.admin)
+    deps.logger.info(`deleted profile ${JSON.stringify(name)} in ${home}`)
+    return json({ deleted: true } satisfies DeleteProfileResponse)
   })
 
   return true

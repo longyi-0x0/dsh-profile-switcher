@@ -26,14 +26,17 @@ full-screen leased webview with one-click return to the default profile.
 - One click starts the target Harness (`dsh --profile <name> --no-open --port 0`).
 - The target UI runs full-screen; the top-left button returns instantly.
 - Returning stops the target server immediately; idle servers stop themselves.
-- In a plain browser (`dsh web` without the Desktop preload) the target opens in a new tab.
+- In a plain browser (`dsh web` without the Desktop preload) the target opens in the system
+  browser.
+- Profiles can be created and deleted from the menu itself; a new profile is a Web profile
+  that can be opened immediately.
 
 ## Requirements
 
 | Requirement            | Notes                                                                                                                  |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| DeepSeek Harness 0.2.x | Tested with Desktop/runtime `0.2.1-rc.3`. Requires the authenticated `ctx.connection.fetch` route registry.            |
-| Desktop app            | Full-screen embedding uses the Desktop browser-lease bridge. `dsh web` degrades to a new tab.                          |
+| DeepSeek Harness 0.2.x | Tested with Desktop/runtime `0.2.1-rc.5`. Requires the authenticated `ctx.connection.fetch` route registry.            |
+| Desktop app            | Full-screen embedding uses the Desktop browser-lease bridge. `dsh web` degrades to the system browser.                 |
 | Node.js ≥ 20           | Only needed when the plugin launches a `dsh` executable discovered on `PATH`.                                          |
 | Target profile         | Must include `@deepseek-ai/dsh-web-app`; third-party bundles with peer dependencies must be installed in that profile. |
 
@@ -73,8 +76,22 @@ dsh plugin --profile desktop add dsh-profile-switcher
 2. Pick a profile (the current one is disabled; running profiles are marked).
 3. The menu closes and the target starts full-screen.
 4. When it is ready, the target UI takes over; the top bar keeps **Back to default** and
-   **Open in new tab**.
+   **Open in browser**.
 5. **Back** releases the guest and stops the target server.
+
+### Create and delete profiles
+
+- **New profile** at the foot of the menu opens an inline name field. The new profile is a
+  Web profile (`@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-web-app`) in the home this Host
+  serves, so it can be opened immediately. Install plugins into it with
+  `dsh plugin --profile <name> add <package>`.
+- A row's delete action arms a confirmation; a second click removes the profile directory
+  together with the packages installed into it. The running profile and the app-managed
+  `desktop` profile offer no delete action.
+
+**Open in browser** hands the target to the default browser. Desktop routes `window.open`
+through `shell.openExternal`, so whether that becomes a tab or a window is the browser's
+choice, not the plugin's.
 
 If the menu reports _No dsh launcher was found_, set `config.dshPath` or install `dsh` on
 `PATH` (see Configuration). Unauthenticated or cross-site requests to the plugin routes
@@ -127,7 +144,11 @@ See [docs/security-model.md](docs/security-model.md) for the threat model.
 
 - Requires `ctx.connection.fetch`. Older DSH releases without it are unsupported and the
   plugin logs a clear diagnostic.
-- Full-screen embedding is Desktop-only; `dsh web` opens the target in a new tab.
+- Full-screen embedding is Desktop-only; `dsh web` opens the target in the system browser.
+- Deleting a profile is irreversible and removes the plugins installed into it; the menu
+  asks for a second click first.
+- Newly created profiles contain no third-party packages until they are installed with
+  `dsh plugin`.
 - The sidebar rail does not render the brand slot, so expand the sidebar first.
 - The guest has no Desktop preload: native-only features (for example the native directory
   picker) fall back to their Web behaviour inside the embedded profile.

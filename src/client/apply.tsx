@@ -40,6 +40,11 @@ export function apply(ctx: ClientContext): void {
     focusTrigger,
   })
 
+  // The trigger renders the active profile name from the listing, so load it once at
+  // startup instead of waiting for the first menu open; otherwise the brand slot shows
+  // the fallback label until the user clicks it.
+  void controller.loadProfiles()
+
   /** Wrap a slot component with the plugin runtime and its error boundary. */
   const slot = (Component: ComponentType): ComponentType<SlotProps> => {
     return function ProfileSwitcherSlot({ t }: SlotProps) {

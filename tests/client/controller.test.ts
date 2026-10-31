@@ -18,8 +18,8 @@ function listing(overrides: Partial<ListResponse> = {}): ListResponse {
         label: '~/.dsh',
         current: true,
         profiles: [
-          { name: 'desktop', current: true, state: 'idle', bundles: 2 },
-          { name: 'web', current: false, state: 'idle', bundles: 1 },
+          { name: 'desktop', current: true, state: 'idle', bundles: 2, deletable: false },
+          { name: 'web', current: false, state: 'idle', bundles: 1, deletable: true },
         ],
       },
     ],
@@ -44,6 +44,8 @@ function createHarness(
     open?: (home: string, name: string, signal?: AbortSignal) => Promise<StatusResponse>
     status?: (home: string, name: string, signal?: AbortSignal) => Promise<StatusResponse>
     list?: () => Promise<ListResponse>
+    create?: (home: string, name: string) => Promise<{ created: true }>
+    remove?: (home: string, name: string) => Promise<{ deleted: true }>
   } = {},
 ) {
   const api: ProfileApi = {
@@ -53,6 +55,8 @@ function createHarness(
       options.status ?? (async (): Promise<StatusResponse> => ({ state: 'ready', url: URL })),
     ),
     stop: vi.fn(async () => ({ state: 'idle' as const, stopped: true })),
+    create: vi.fn(options.create ?? (async () => ({ created: true as const }))),
+    remove: vi.fn(options.remove ?? (async () => ({ deleted: true as const }))),
   }
   const store = createStore({
     ...INITIAL_STATE,
@@ -311,13 +315,75 @@ describe('ProfileController', () => {
     expect(state.errorDetail).not.toContain('secret')
   })
 
-  it('opens the current URL in a tab, or reports a blocked popup', async () => {
+  it('creates a profile and refreshes the listing', async () => {
+    const { controller, store, api } = createHarness()
+    const created = await controller.createProfile(HOME, 'lab')
+    expect(created).toBe(true)
+    expect(api.create).toHaveBeenCalledWith(HOME, 'lab')
+    expect(api.list).toHaveBeenCalled()
+    expect(store.getSnapshot().mutation).toBeNull()
+  })
+
+  it('reports a failed creation and keeps the draft in the store', async () => {
+    const { controller, store } = createHarness({
+      create: async () => {
+        throw new ApiClientError('profile-exists', 409)
+      },
+    })
+    const created = await controller.createProfile(HOME, 'web')
+    expect(created).toBe(false)
+    expect(store.getSnapshot().mutation).toEqual({
+      kind: 'create',
+      name: 'web',
+      busy: false,
+      error: { code: 'profile-exists' },
+    })
+    expect(store.getSnapshot().menuLoading).toBe(false)
+  })
+
+  it('drops a failed mutation when the menu reopens but keeps a running one', () => {
+    const { controller, store } = createHarness()
+    const anchor = { left: 0, top: 0, bottom: 0 }
+    store.update({
+      mutation: { kind: 'create', name: 'web', busy: false, error: { code: 'profile-exists' } },
+    })
+    controller.openMenu(anchor)
+    expect(store.getSnapshot().mutation).toBeNull()
+
+    store.update({ mutation: { kind: 'create', name: 'lab', busy: true, error: null } })
+    controller.openMenu(anchor)
+    expect(store.getSnapshot().mutation).toMatchObject({ name: 'lab', busy: true })
+  })
+
+  it('deletes a profile and refreshes the listing', async () => {
+    const { controller, store, api } = createHarness()
+    const deleted = await controller.deleteProfile(HOME, 'web')
+    expect(deleted).toBe(true)
+    expect(api.remove).toHaveBeenCalledWith(HOME, 'web')
+    expect(api.list).toHaveBeenCalled()
+    expect(store.getSnapshot().mutation).toBeNull()
+  })
+
+  it('reports a refused deletion with its sanitized detail', async () => {
+    const { controller, store } = createHarness({
+      remove: async () => {
+        throw new ApiClientError('profile-delete-failed', 500, 'EACCES http://x/?token=secret')
+      },
+    })
+    await expect(controller.deleteProfile(HOME, 'web')).resolves.toBe(false)
+    const mutation = store.getSnapshot().mutation
+    expect(mutation?.error?.code).toBe('profile-delete-failed')
+    expect(mutation?.error?.detail).toContain('http://x')
+    expect(mutation?.error?.detail).not.toContain('secret')
+  })
+
+  it('opens the current URL in the browser, or reports a blocked popup', async () => {
     const { controller, store, openExternal } = createHarness({
       open: async () => ({ state: 'ready', url: URL }),
       openExternal: false,
     })
     await controller.beginSelect(HOME, 'web')
-    controller.openInTab()
+    controller.openInBrowser()
     expect(openExternal).toHaveBeenCalledWith(URL)
     expect(store.getSnapshot()).toMatchObject({ phase: 'error', errorCode: 'popup-blocked' })
   })

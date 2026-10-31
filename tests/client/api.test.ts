@@ -71,6 +71,22 @@ describe('createApi', () => {
     })
   })
 
+  it('posts profile mutations to create and delete', async () => {
+    const { api, fetchImpl } = apiWith((url) =>
+      url.endsWith('/create')
+        ? fakeResponse({ created: true }, 201)
+        : fakeResponse({ deleted: true }),
+    )
+    await expect(api.create('/h', 'lab')).resolves.toEqual({ created: true })
+    await expect(api.remove('/h', 'web')).resolves.toEqual({ deleted: true })
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe(`${API_PREFIX}/create`)
+    expect(fetchImpl.mock.calls[1]?.[0]).toBe(`${API_PREFIX}/delete`)
+    expect(fetchImpl.mock.calls[1]?.[1]).toMatchObject({
+      method: 'POST',
+      body: JSON.stringify({ home: '/h', name: 'web' }),
+    })
+  })
+
   it('encodes status query values', async () => {
     const { api, fetchImpl } = apiWith(() => fakeResponse({ state: 'ready', url: 'http://x/' }))
     await api.status('/Users/me/.dsh', 'web')

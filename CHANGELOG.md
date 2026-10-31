@@ -4,6 +4,37 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Profile creation from the sidebar menu: an inline name field writes a Web profile
+  (`@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-web-app`) into the home this Host serves,
+  ready to open immediately.
+- Profile deletion from the sidebar menu: a two-step confirmation stops the profile's server
+  and removes its directory. The running profile and the app-managed `desktop` profile are
+  refused, and `/list` publishes `deletable` per row.
+- `POST /api/profile-switcher/create` and `POST /api/profile-switcher/delete` on the
+  authenticated carrier, with `profile-exists`, `profile-reserved`, `profile-create-failed`,
+  and `profile-delete-failed` error codes.
+
+### Changed
+
+- The overlay's external action is one **Open in browser** button: Desktop routes
+  `window.open` through `shell.openExternal`, so a tab and a window cannot be distinguished
+  there.
+- The brand trigger reads the listing at startup instead of waiting for the first menu open.
+
+### Fixed
+
+- The sidebar brand slot showed the fallback label until the menu was opened, because the
+  active profile name only arrived with the menu's `/list` request.
+
+### Security
+
+- Deletion requires the owner session, stops the profile's server first, and refuses the
+  running profile and the app-managed `desktop` profile of the served home.
+
 ## [1.0.0] - 2026-10-30
 
 First public release. The plugin is a complete rewrite of the private prototype; the

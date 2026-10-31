@@ -43,7 +43,7 @@ describe('EmbedSurface', () => {
     expect(view.getByText('The embedded window failed to open')).toBeTruthy()
     expect(view.getByText('boom')).toBeTruthy()
     const card = view.getByRole('alert')
-    fireEvent.click(within(card).getByRole('button', { name: /Open in new tab/ }))
+    fireEvent.click(within(card).getByRole('button', { name: /Open in browser/ }))
     expect(runtime.openExternal).toHaveBeenCalledWith(PROFILE_URL)
     fireEvent.click(within(card).getByRole('button', { name: 'Retry' }))
     await waitFor(() =>

@@ -23,6 +23,17 @@ export interface MenuError {
   detail?: string
 }
 
+/** One in-flight profile mutation started from the menu. */
+export interface ProfileMutation {
+  kind: 'create' | 'delete'
+  /** Profile name the mutation targets. */
+  name: string
+  /** Whether the request is still running. */
+  busy: boolean
+  /** Last failure, cleared when the next attempt starts. */
+  error: MenuError | null
+}
+
 /** Everything the Client renders. */
 export interface ClientState {
   menuOpen: boolean
@@ -38,6 +49,8 @@ export interface ClientState {
   canLaunch: boolean
   menuLoading: boolean
   menuError: MenuError | null
+  /** Profile being created or deleted from the menu, if any. */
+  mutation: ProfileMutation | null
   currentName: string
   currentHome: string | null
   launcherKind: LauncherKind | null
@@ -69,6 +82,7 @@ export const INITIAL_STATE: ClientState = {
   canLaunch: true,
   menuLoading: false,
   menuError: null,
+  mutation: null,
   currentName: '',
   currentHome: null,
   launcherKind: null,

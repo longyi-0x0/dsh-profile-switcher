@@ -3,7 +3,7 @@ import { ApiClientError, delay, isAbortError, type ProfileApi } from './api'
 import type { ClientErrorCode } from './i18n'
 import { sanitizeDetail } from './redact'
 import type { Store } from './store'
-import type { ClientState, MenuAnchor } from './state'
+import type { ClientState, MenuAnchor, ProfileMutation } from './state'
 
 /** Dependencies injected by `apply`. */
 export interface ControllerDeps {
@@ -60,7 +60,14 @@ export class ProfileController {
    * @param anchor - trigger rectangle.
    */
   openMenu(anchor: MenuAnchor): void {
-    this.deps.store.update({ menuOpen: true, anchor, notice: null })
+    const mutation = this.state.mutation
+    this.deps.store.update({
+      menuOpen: true,
+      anchor,
+      notice: null,
+      // A failure belongs to the menu session that caused it; a busy request does not.
+      mutation: mutation === null || mutation.busy ? mutation : null,
+    })
     void this.loadProfiles()
   }
 
@@ -107,6 +114,32 @@ export class ProfileController {
         },
       })
     }
+  }
+
+  /**
+   * Create one profile in the given home and refresh the listing.
+   *
+   * @param home - allow-listed home path.
+   * @param name - profile name to create.
+   * @returns whether the profile was created.
+   */
+  async createProfile(home: string, name: string): Promise<boolean> {
+    return this.mutate({ kind: 'create', name, busy: true, error: null }, async () => {
+      await this.deps.api.create(home, name)
+    })
+  }
+
+  /**
+   * Delete one profile and refresh the listing. The Host stops its server first.
+   *
+   * @param home - allow-listed home path.
+   * @param name - profile name to delete.
+   * @returns whether the profile was deleted.
+   */
+  async deleteProfile(home: string, name: string): Promise<boolean> {
+    return this.mutate({ kind: 'delete', name, busy: true, error: null }, async () => {
+      await this.deps.api.remove(home, name)
+    })
   }
 
   /**
@@ -162,7 +195,7 @@ export class ProfileController {
   }
 
   /** Open the current target URL in the system browser. */
-  openInTab(): void {
+  openInBrowser(): void {
     const url = this.state.url
     if (url === null) return
     if (!this.deps.openExternal(url)) {
@@ -204,6 +237,35 @@ export class ProfileController {
   }
 
   // --- internals -------------------------------------------------------------
+
+  /**
+   * Run one profile mutation, publish its busy and error state, then refresh the list.
+   *
+   * @param mutation - the mutation as first reported.
+   * @param run - request to perform.
+   * @returns whether the mutation succeeded.
+   */
+  private async mutate(mutation: ProfileMutation, run: () => Promise<void>): Promise<boolean> {
+    this.deps.store.update({ mutation })
+    try {
+      await run()
+      if (this.disposed) return false
+      this.deps.store.update({ mutation: null })
+      await this.loadProfiles()
+      return true
+    } catch (error) {
+      if (this.disposed || isAbortError(error)) return false
+      const detail = sanitizeDetail(detailOf(error))
+      this.deps.store.update({
+        mutation: {
+          ...mutation,
+          busy: false,
+          error: { code: codeOf(error), ...(detail === undefined ? {} : { detail }) },
+        },
+      })
+      return false
+    }
+  }
 
   /** @param token - flow token captured at start. */
   private isCurrent(token: number): boolean {

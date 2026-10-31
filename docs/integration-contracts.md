@@ -119,3 +119,28 @@ When you touch one of these contracts, update this table and add or amend an ADR
   only these two modules (verified by the smoke test).
 - **If it changes**: the bundle fails to materialize and the slot entries stay empty; the
   smoke test reports any unexpected module request before release.
+
+## 10. Profile directory layout
+
+- **Fact**: a profile is a directory `<home>/profiles/<name>` holding three files the
+  launcher reads before booting: `package.json` with `dsh.profile.bundles` (the ordered
+  bundle stack), `cordis.patch.yml` (the user patch layer; an empty list is valid), and
+  `pnpm-workspace.yaml` (`nodeLinker: hoisted`, `autoInstallPeers: false`). The shipped
+  `web` tuple is `@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-web-app`; the Electron
+  application owns the `desktop` profile inside the home it serves and boots it with
+  `loadProfileDirectory` rather than CLI lookup. A name without a shipped template is not
+  auto-initialized: `loadProfile` fails until the directory exists.
+- **Evidence**: Desktop 0.2.1-rc.5 `lib/main.js` (`initProfile`, `PROFILE_TEMPLATES`,
+  `DesktopHostProcess`), `@deepseek-ai/dsh-app-boot` `lib/index.js` (`loadProfile`,
+  `initProfile`, `resolveProfileDir`). Verified on 2026-10-31 by writing those three files
+  by hand into a temporary `DSH_HOME` and booting
+  `dsh-desktop-host/lib/cli.js --profile probe --no-open --port 0`; it printed
+  `dsh web: <url>` without installing anything into the profile.
+- **Plugin use**: `src/host/profile-admin.ts` (create/delete), `src/host/index.ts`
+  (filesystem seams).
+- **If it changes**: creation writes files the loader cannot resolve, so the new profile
+  boots with its bundles skipped (empty UI); the manifest is written last, so a failed
+  creation never shows up as a profile. Deletion works on the directory path and does not
+  parse the manifest, so only the name/location contract matters there. Keep
+  `@deepseek-ai/dsh-web-app` in `NEW_PROFILE_BUNDLES` for the switcher to be able to embed
+  what it creates.

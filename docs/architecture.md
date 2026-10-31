@@ -42,11 +42,12 @@ Client controller: open → poll status → lease webview → loadURL(token URL)
 | `homes.ts`           | Current home + configured extra homes + `~/.dsh-*` siblings that own `profiles/`. Stable code-point ordering.                                |
 | `current-profile.ts` | `DSH_PROFILE` → `DSH_PROFILE_DIR` → `--profile` → Desktop argv layout.                                                                       |
 | `profiles.ts`        | Lists profile directories with manifest bundle count and mtime; skips names the API cannot launch.                                           |
+| `profile-admin.ts`   | Creates and deletes profile directories in the Harness profile layout; owns the reserved/current-profile policy.                             |
 | `launcher.ts`        | Resolves the Desktop CLI inside `app.asar` under `ELECTRON_RUN_AS_NODE`, or `dsh` on `PATH` (Windows PATHEXT). Builds the child environment. |
 | `web-url.ts`         | Incremental line scanner for `dsh web: <url>`; validates HTTP(S), no credentials, handles ANSI and chunk splits.                             |
 | `process.ts`         | Process-group termination and bounded `waitForExit`.                                                                                         |
 | `supervisor.ts`      | One record per target: state machine, start timeout, max running, heartbeats, idle sweep, exit handling, summaries, diagnostics.             |
-| `routes.ts`          | Four exact Fetch routes, JSON helpers, 16 KiB streamed body reader, error-to-status mapping.                                                 |
+| `routes.ts`          | Six exact Fetch routes, JSON helpers, 16 KiB streamed body reader, error-to-status mapping.                                                  |
 | `redact.ts`          | ANSI stripping, token/URL redaction, bounded details.                                                                                        |
 | `errors.ts`          | `ApiError` carrying a stable code and HTTP status.                                                                                           |
 
@@ -62,7 +63,7 @@ Client controller: open → poll status → lease webview → loadURL(token URL)
 | `insets.ts`            | Reads the Host top clearance, computes platform insets for the overlay bar.                                                         |
 | `ui/menu-position.ts`  | Anchored placement with flipping and viewport clamping.                                                                             |
 | `ui/BrandTrigger.tsx`  | Brand slot occupant: wordmark + active profile; menu toggle and keyboard entry.                                                     |
-| `ui/ProfileMenu.tsx`   | Grouped rows, diagnostics, states, roving focus, outside-click close.                                                               |
+| `ui/ProfileMenu.tsx`   | Grouped rows, diagnostics, states, roving focus, outside-click close, inline create form, two-step delete.                          |
 | `ui/EmbedSurface.tsx`  | Full-screen surface: top bar, guest host, loading/error cards, inset observation.                                                   |
 | `ui/Wordmark.tsx`      | Official wordmark geometry copied from the MIT-licensed Host primitive.                                                             |
 | `ui/ErrorBoundary.tsx` | Keeps a crashing slot entry from blanking the Host slot.                                                                            |
@@ -95,6 +96,24 @@ any ──stop──▶ stopping ──exit/timeout──▶ (record removed)
 `lastSeenAt` is refreshed by `/open` and `/status`. The Client polls `/status` every
 `keepaliveMs` while embedded, so an on-screen guest keeps its server alive. When the page
 closes, heartbeats stop and the idle sweep stops the server after `idleStopMs`.
+
+## Profile management
+
+The menu can create and delete profiles without invoking `dsh` or pnpm: a profile is a
+directory with a manifest, a user patch layer, and pnpm workspace settings, and the bundles a
+new profile declares resolve from the installation.
+
+- `POST /create` writes `cordis.patch.yml`, `pnpm-workspace.yaml`, and finally
+  `package.json` (the manifest marks a directory as a profile, so it goes last). A failure
+  removes the directory it just created.
+- A new profile starts with `@deepseek-ai/dsh-base` plus `@deepseek-ai/dsh-web-app`, the
+  same stack the Desktop shell boots, so the switcher can embed it immediately.
+- `POST /delete` stops the profile's server first, then removes the directory tree. The
+  running profile and the app-managed `desktop` profile in the served home are refused; the
+  listing publishes `deletable` per row so the menu never offers a refused action.
+
+Deletion is irreversible and owns the plugin packages installed into that profile; the UI
+arms a confirmation on the first click and deletes on the second.
 
 ## Lease lifecycle
 

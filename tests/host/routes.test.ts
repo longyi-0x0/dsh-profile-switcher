@@ -1,8 +1,10 @@
 import { EventEmitter } from 'node:events'
+import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { API_PREFIX, type ListResponse, type StatusResponse } from '../../src/shared/protocol'
 import { DEFAULT_CONFIG, type ProfileSwitcherConfig } from '../../src/shared/config'
 import type { FetchRoute, HostContext, HostLogger } from '../../src/host/context'
+import type { ProfileAdminDeps } from '../../src/host/profile-admin'
 import { registerRoutes } from '../../src/host/routes'
 import {
   ProfileSupervisor,
@@ -51,11 +53,36 @@ interface HarnessOptions {
   currentProfile?: string | null
   config?: Partial<ProfileSwitcherConfig>
   withRegistry?: boolean
+  /** Profile directories that already exist for the create operation. */
+  existingDirectories?: string[]
+}
+
+/** In-memory stand-in for the filesystem behind profile mutations. */
+function fakeAdmin(existing: string[] = []) {
+  const directories = new Set(existing)
+  const files = new Map<string, string>()
+  const removed: string[] = []
+  const admin: ProfileAdminDeps = {
+    exists: (path) => directories.has(path),
+    mkdir: (path) => {
+      if (directories.has(path)) throw new Error('EEXIST: file already exists')
+      directories.add(path)
+    },
+    writeFile: (path, content) => {
+      files.set(path, content)
+    },
+    remove: (path) => {
+      removed.push(path)
+      directories.delete(path)
+    },
+  }
+  return { admin, directories, files, removed }
 }
 
 function harness(options: HarnessOptions = {}) {
   const profiles = options.profiles ?? ['desktop', 'web', 'trading']
   const currentProfile = options.currentProfile === undefined ? 'desktop' : options.currentProfile
+  const admin = fakeAdmin(options.existingDirectories ?? [])
   const logger: HostLogger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -116,6 +143,7 @@ function harness(options: HarnessOptions = {}) {
   const registered = registerRoutes(ctx, {
     supervisor,
     files,
+    admin: admin.admin,
     currentHome: HOME,
     currentProfile,
     homes: [HOME],
@@ -136,7 +164,17 @@ function harness(options: HarnessOptions = {}) {
     return { status: response.status, body: await response.json() }
   }
 
-  return { supervisor, routes, registered, call, jsonCall, logger, children, profiles }
+  return {
+    supervisor,
+    routes,
+    registered,
+    call,
+    jsonCall,
+    logger,
+    children,
+    profiles,
+    admin,
+  }
 }
 
 function post(body: unknown, headers: Record<string, string> = {}): RequestInit {
@@ -152,7 +190,7 @@ afterEach(() => {
 })
 
 describe('profile routes', () => {
-  it('registers all four authenticated routes', () => {
+  it('registers all six authenticated routes', () => {
     const routes = harness().routes
     expect([...routes.keys()].sort()).toEqual(
       [
@@ -160,10 +198,14 @@ describe('profile routes', () => {
         `${API_PREFIX}/open`,
         `${API_PREFIX}/status`,
         `${API_PREFIX}/stop`,
+        `${API_PREFIX}/create`,
+        `${API_PREFIX}/delete`,
       ].sort(),
     )
     expect(routes.get(`${API_PREFIX}/open`)?.methods).toEqual(['POST'])
     expect(routes.get(`${API_PREFIX}/open`)?.requestBody).toBe('streaming')
+    expect(routes.get(`${API_PREFIX}/create`)?.requestBody).toBe('streaming')
+    expect(routes.get(`${API_PREFIX}/delete`)?.requestBody).toBe('streaming')
   })
 
   it('reports the listing without any launch URL', async () => {
@@ -184,6 +226,9 @@ describe('profile routes', () => {
     expect(JSON.stringify(body)).not.toContain('token=')
     expect(JSON.stringify(body)).not.toContain('secret')
     expect(listing.limits.startTimeoutMs).toBe(10_000)
+    const profiles = listing.homes.flatMap((home) => home.profiles)
+    expect(profiles.find((profile) => profile.name === 'desktop')?.deletable).toBe(false)
+    expect(profiles.find((profile) => profile.name === 'web')?.deletable).toBe(true)
   })
 
   it('opens a profile and reports starting', async () => {
@@ -203,6 +248,8 @@ describe('profile routes', () => {
   it('rejects invalid profile names and unknown profiles', async () => {
     const { jsonCall } = harness()
     expect((await jsonCall('/open', post({ home: HOME, name: '--bad' }))).status).toBe(400)
+    // The profile tree's own resolution directory is not a profile.
+    expect((await jsonCall('/open', post({ home: HOME, name: 'node_modules' }))).status).toBe(400)
     expect((await jsonCall('/open', post({ home: HOME, name: 'missing' }))).status).toBe(404)
   })
 
@@ -266,6 +313,81 @@ describe('profile routes', () => {
     expect(result.status).toBe(500)
     expect(result.body).toEqual({ error: 'internal-error' })
     expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain('secret')
+  })
+
+  it('creates a profile directory with the Web bundle stack', async () => {
+    const { jsonCall, admin } = harness()
+    const result = await jsonCall('/create', post({ home: HOME, name: 'lab' }))
+    expect(result.status).toBe(201)
+    expect(result.body).toEqual({ created: true })
+    const directory = join(HOME, 'profiles', 'lab')
+    expect(admin.directories.has(directory)).toBe(true)
+    const manifest = JSON.parse(admin.files.get(join(directory, 'package.json')) ?? '{}')
+    expect(manifest).toEqual({
+      name: 'dsh-profile-lab',
+      private: true,
+      dependencies: {},
+      dsh: { profile: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app'] } },
+    })
+    expect(admin.files.has(join(directory, 'cordis.patch.yml'))).toBe(true)
+    expect(admin.files.has(join(directory, 'pnpm-workspace.yaml'))).toBe(true)
+  })
+
+  it('refuses to create an existing, reserved, or invalid profile', async () => {
+    const existing = join(HOME, 'profiles', 'web')
+    const { jsonCall } = harness({ existingDirectories: [existing] })
+    const exists = await jsonCall('/create', post({ home: HOME, name: 'web' }))
+    expect(exists.status).toBe(409)
+    expect(exists.body).toEqual({ error: 'profile-exists' })
+
+    const reserved = await jsonCall('/create', post({ home: HOME, name: 'desktop' }))
+    expect(reserved.status).toBe(409)
+    expect(reserved.body).toEqual({ error: 'profile-reserved' })
+
+    expect((await jsonCall('/create', post({ home: HOME, name: '--bad' }))).status).toBe(400)
+    expect((await jsonCall('/create', post({ home: '/elsewhere', name: 'lab' }))).status).toBe(400)
+  })
+
+  it('deletes a profile directory', async () => {
+    const existing = join(HOME, 'profiles', 'web')
+    const { jsonCall, admin } = harness({ existingDirectories: [existing] })
+    const result = await jsonCall('/delete', post({ home: HOME, name: 'web' }))
+    expect(result.status).toBe(200)
+    expect(result.body).toEqual({ deleted: true })
+    expect(admin.removed).toEqual([join(HOME, 'profiles', 'web')])
+  })
+
+  it('refuses to delete the running, app-managed, or missing profile', async () => {
+    const running = harness({ currentProfile: 'web' })
+    const current = await running.jsonCall('/delete', post({ home: HOME, name: 'web' }))
+    expect(current.status).toBe(409)
+    expect(current.body).toEqual({ error: 'profile-is-current' })
+    expect(running.admin.removed).toEqual([])
+
+    const managed = await running.jsonCall('/delete', post({ home: HOME, name: 'desktop' }))
+    expect(managed.status).toBe(409)
+    expect(managed.body).toEqual({ error: 'profile-reserved' })
+
+    const missing = await running.jsonCall('/delete', post({ home: HOME, name: 'missing' }))
+    expect(missing.status).toBe(404)
+    expect(missing.body).toEqual({ error: 'profile-not-found' })
+  })
+
+  it('stops a running server before deleting its profile', async () => {
+    const existing = join(HOME, 'profiles', 'web')
+    const { supervisor, jsonCall, children } = harness({
+      currentProfile: 'desktop',
+      existingDirectories: [existing],
+    })
+    await supervisor.open(HOME, 'web')
+    const child = children[0]
+    if (child === undefined) throw new Error('no child')
+    child.stdout.emit('data', 'dsh web: http://127.0.0.1:4321/?token=secret\n')
+    const response = jsonCall('/delete', post({ home: HOME, name: 'web' }))
+    child.exit.emit('exit', 0, 'SIGTERM')
+    const result = await response
+    expect(result.status).toBe(200)
+    expect(supervisor.status(HOME, 'web')).toEqual({ state: 'idle' })
   })
 
   it('reports unavailable when the connection registry is missing', () => {

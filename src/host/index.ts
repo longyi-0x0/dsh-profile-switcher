@@ -9,10 +9,21 @@
  * - `homes` / `current-profile` find what can be launched;
  * - `launcher` resolves the dsh executable to spawn;
  * - `supervisor` owns every child process and its lifecycle;
- * - `routes` exposes the four operations below the authenticated `/api` carrier.
+ * - `profile-admin` creates and deletes profile directories;
+ * - `routes` exposes the six operations below the authenticated `/api` carrier.
  */
 import { spawn } from 'node:child_process'
-import { accessSync, constants, existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import {
+  accessSync,
+  constants,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { normalizeConfig } from '../shared/config'
@@ -22,6 +33,7 @@ import { discoverHomes, homeLabel } from './homes'
 import { resolveLauncher } from './launcher'
 import { createScopedLogger } from './logger'
 import { createProcessOperations, type SpawnLike } from './process'
+import type { ProfileAdminDeps } from './profile-admin'
 import { listProfileDirectories } from './profiles'
 import { registerRoutes } from './routes'
 import { ProfileSupervisor, type ProfileFiles } from './supervisor'
@@ -72,6 +84,28 @@ function createProfileFiles(): ProfileFiles {
  */
 function resourcesPath(): string | undefined {
   return (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath
+}
+
+/**
+ * Filesystem-backed profile mutations. The directory operations are deliberately not
+ * recursive on create: `mkdirSync` failing with `EEXIST` is the "profile exists" check
+ * that keeps a race from adopting somebody else's directory.
+ *
+ * @returns the administrator seam.
+ */
+function createProfileAdmin(): ProfileAdminDeps {
+  return {
+    exists: (path) => existsSync(path),
+    mkdir: (path) => {
+      mkdirSync(path)
+    },
+    writeFile: (path, content) => {
+      writeFileSync(path, content, { flag: 'wx' })
+    },
+    remove: (path) => {
+      rmSync(path, { recursive: true, force: true })
+    },
+  }
 }
 
 /**
@@ -161,6 +195,7 @@ export function apply(ctx: HostContext, rawConfig?: unknown): void {
   const routesRegistered = registerRoutes(ctx, {
     supervisor,
     files,
+    admin: createProfileAdmin(),
     currentHome,
     currentProfile,
     homes,

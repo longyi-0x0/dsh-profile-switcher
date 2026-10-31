@@ -19,35 +19,42 @@ function openMenu(state: Parameters<typeof createTestRuntime>[0] = {}) {
   return { ...runtime, ...view }
 }
 
+/** @param view - rendered menu. @returns the profile-opening rows in order. */
+function openRows(view: { container: HTMLElement }): HTMLElement[] {
+  return [...view.container.querySelectorAll<HTMLElement>('[data-dps-open="1"]')]
+}
+
 describe('ProfileMenu', () => {
   it('renders grouped rows with the current row disabled', () => {
-    const { getByRole, getAllByRole, getByText } = openMenu()
-    expect(getByRole('menu').getAttribute('aria-label')).toBe('Switch profile')
-    const rows = getAllByRole('menuitem')
+    const view = openMenu()
+    expect(view.getByRole('menu').getAttribute('aria-label')).toBe('Switch profile')
+    const rows = openRows(view)
     expect(rows).toHaveLength(3)
     const current = rows.find((row) => row.textContent?.includes('desktop'))
     expect((current as HTMLButtonElement).disabled).toBe(true)
     expect(current?.textContent).toContain('Current')
-    expect(getByText('~/.dsh')).toBeTruthy()
-    expect(getByText('Running')).toBeTruthy()
+    expect(view.getByText('~/.dsh')).toBeTruthy()
+    expect(view.getByText('Running')).toBeTruthy()
   })
 
   it('focuses the first enabled row and supports roving keys', async () => {
-    const { getByRole, getAllByRole } = openMenu()
-    const rows = getAllByRole('menuitem')
+    const view = openMenu()
+    const rows = openRows(view)
     const web = rows.find((row) => row.textContent?.includes('web'))
+    const deleteWeb = view.getByRole('menuitem', { name: 'Delete web' })
     const trading = rows.find((row) => row.textContent?.includes('trading'))
     if (web === undefined || trading === undefined) throw new Error('missing rows')
     await waitFor(() => expect(document.activeElement).toBe(web))
-    const menu = getByRole('menu')
+    const menu = view.getByRole('menu')
+    // Row actions take part in the same arrow sequence, so they stay reachable.
     fireEvent.keyDown(menu, { key: 'ArrowDown' })
-    expect(document.activeElement).toBe(trading)
-    fireEvent.keyDown(menu, { key: 'ArrowUp' })
-    expect(document.activeElement).toBe(web)
-    fireEvent.keyDown(menu, { key: 'End' })
+    expect(document.activeElement).toBe(deleteWeb)
+    fireEvent.keyDown(menu, { key: 'ArrowDown' })
     expect(document.activeElement).toBe(trading)
     fireEvent.keyDown(menu, { key: 'Home' })
     expect(document.activeElement).toBe(web)
+    fireEvent.keyDown(menu, { key: 'End' })
+    expect(document.activeElement).toBe(view.getByRole('menuitem', { name: 'New profile' }))
   })
 
   it('closes on Escape and restores focus to the trigger', () => {
@@ -73,7 +80,7 @@ describe('ProfileMenu', () => {
 
   it('selects a profile', () => {
     const runtime = openMenu()
-    const row = runtime.getAllByRole('menuitem').find((item) => item.textContent?.includes('web'))
+    const row = openRows(runtime).find((item) => item.textContent?.includes('web'))
     if (row === undefined) throw new Error('missing web row')
     fireEvent.click(row)
     expect(runtime.store.getSnapshot()).toMatchObject({
@@ -83,12 +90,72 @@ describe('ProfileMenu', () => {
     expect(runtime.api.open).toHaveBeenCalledWith(HOME, 'web', expect.anything())
   })
 
+  it('creates a profile from the inline form', async () => {
+    const runtime = openMenu()
+    fireEvent.click(runtime.getByRole('menuitem', { name: 'New profile' }))
+    const input = runtime.getByRole('textbox', { name: 'Profile name' })
+    expect(document.activeElement).toBe(input)
+
+    fireEvent.change(input, { target: { value: 'lab' } })
+    fireEvent.click(runtime.getByRole('button', { name: 'Create' }))
+    await waitFor(() => expect(runtime.api.create).toHaveBeenCalledWith(HOME, 'lab'))
+    await waitFor(() => expect(runtime.queryByRole('textbox')).toBeNull())
+  })
+
+  it('keeps creation disabled for an invalid name', () => {
+    const runtime = openMenu()
+    fireEvent.click(runtime.getByRole('menuitem', { name: 'New profile' }))
+    const create = runtime.getByRole('button', { name: 'Create' }) as HTMLButtonElement
+    expect(create.disabled).toBe(true)
+    fireEvent.change(runtime.getByRole('textbox'), { target: { value: '--bad' } })
+    expect(create.disabled).toBe(true)
+    fireEvent.change(runtime.getByRole('textbox'), { target: { value: 'lab' } })
+    expect(create.disabled).toBe(false)
+  })
+
+  it('closes the form on Escape without closing the menu', () => {
+    const runtime = openMenu()
+    fireEvent.click(runtime.getByRole('menuitem', { name: 'New profile' }))
+    fireEvent.keyDown(runtime.getByRole('menu'), { key: 'Escape' })
+    expect(runtime.queryByRole('textbox')).toBeNull()
+    expect(runtime.store.getSnapshot().menuOpen).toBe(true)
+  })
+
+  it('deletes a profile after a second confirmation click', async () => {
+    const runtime = openMenu()
+    fireEvent.click(runtime.getByRole('menuitem', { name: 'Delete web' }))
+    expect(runtime.getByRole('menuitem', { name: 'Confirm deleting web' })).toBeTruthy()
+    expect(runtime.api.remove).not.toHaveBeenCalled()
+    fireEvent.click(runtime.getByRole('menuitem', { name: 'Confirm deleting web' }))
+    await waitFor(() => expect(runtime.api.remove).toHaveBeenCalledWith(HOME, 'web'))
+  })
+
+  it('does not offer to delete the running profile', () => {
+    const runtime = openMenu()
+    expect(runtime.queryByRole('menuitem', { name: 'Delete desktop' })).toBeNull()
+    expect(runtime.getByRole('menuitem', { name: 'Delete trading' })).toBeTruthy()
+  })
+
+  it('renders a mutation failure', () => {
+    const runtime = openMenu({
+      state: {
+        mutation: {
+          kind: 'create',
+          name: 'web',
+          busy: false,
+          error: { code: 'profile-exists' },
+        },
+      },
+    })
+    expect(runtime.getByText(/already exists/)).toBeTruthy()
+  })
+
   it('disables every row when launching is unavailable', () => {
     const runtime = createTestRuntime({
       state: { menuOpen: true, anchor: ANCHOR, homes: listing().homes, canLaunch: false },
     })
     const view = runtime.render(<ProfileMenu />)
-    for (const row of view.getAllByRole('menuitem')) {
+    for (const row of openRows(view)) {
       expect((row as HTMLButtonElement).disabled).toBe(true)
     }
   })
@@ -138,7 +205,7 @@ describe('ProfileMenu', () => {
     })
     const view = runtime.render(<ProfileMenu />)
     expect(view.getByText(/No dsh launcher found/)).toBeTruthy()
-    expect(view.getByText(/Opened in a new tab/)).toBeTruthy()
+    expect(view.getByText(/Opened in the browser/)).toBeTruthy()
     expect(view.queryByText(/made-up/)).toBeNull()
   })
 })

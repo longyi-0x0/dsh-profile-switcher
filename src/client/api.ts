@@ -1,5 +1,7 @@
 import {
   API_PREFIX,
+  type CreateProfileResponse,
+  type DeleteProfileResponse,
   type ErrorResponse,
   type ListResponse,
   type StatusResponse,
@@ -27,12 +29,14 @@ export class ApiClientError extends Error {
   }
 }
 
-/** The four plugin operations. */
+/** The plugin operations. */
 export interface ProfileApi {
   list(signal?: AbortSignal): Promise<ListResponse>
   open(home: string, name: string, signal?: AbortSignal): Promise<StatusResponse>
   status(home: string, name: string, signal?: AbortSignal): Promise<StatusResponse>
   stop(home: string, name: string, signal?: AbortSignal): Promise<StopResponse>
+  create(home: string, name: string, signal?: AbortSignal): Promise<CreateProfileResponse>
+  remove(home: string, name: string, signal?: AbortSignal): Promise<DeleteProfileResponse>
 }
 
 /** @param value - unknown JSON value. @returns whether it is a plain object. */
@@ -171,6 +175,12 @@ export function createApi(fetchImpl?: typeof fetch): ProfileApi {
     },
     async stop(home, name, signal) {
       return (await post('/stop', home, name, signal)) as StopResponse
+    },
+    async create(home, name, signal) {
+      return (await post('/create', home, name, signal)) as CreateProfileResponse
+    },
+    async remove(home, name, signal) {
+      return (await post('/delete', home, name, signal)) as DeleteProfileResponse
     },
   }
 }

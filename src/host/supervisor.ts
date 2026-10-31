@@ -16,6 +16,7 @@ import { ApiError } from './errors'
 import { homeLabel } from './homes'
 import { launcherArgs, type ResolvedLauncher } from './launcher'
 import { terminateChild, type ChildLike, type ProcessOperations, type SpawnLike } from './process'
+import { canDeleteProfile } from './profile-admin'
 import type { ListedProfile } from './profiles'
 import { loggableOrigin, sanitizeDetail } from './redact'
 import { WebUrlScanner } from './web-url'
@@ -414,6 +415,12 @@ export class ProfileSupervisor {
       current: home === this.deps.currentHome && listed.name === this.deps.currentProfile,
       state: record?.state ?? 'idle',
       bundles: listed.bundles,
+      deletable: canDeleteProfile(
+        home,
+        listed.name,
+        this.deps.currentHome,
+        this.deps.currentProfile,
+      ),
     }
     if (listed.updatedAt !== undefined) summary.updatedAt = listed.updatedAt
     if (record?.error !== null && record?.error !== undefined) summary.error = record.error

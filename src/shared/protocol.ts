@@ -15,8 +15,10 @@ export const API_VERSION = 1
 /**
  * Profile names accepted in URLs and request bodies. They become command-line
  * arguments and directory names, so only a conservative ASCII shape is allowed.
+ * `node_modules` is refused for the same reason the CLI refuses it: it is the
+ * profile's resolution directory, not a profile.
  */
-export const PROFILE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/
+export const PROFILE_NAME_PATTERN = /^(?!node_modules$)[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/
 
 /** Lifecycle state of one target profile's server. */
 export type ProfileState = 'idle' | 'starting' | 'ready' | 'error' | 'stopping'
@@ -33,6 +35,10 @@ export type ApiErrorCode =
   | 'invalid-profile-name'
   | 'profile-not-found'
   | 'profile-is-current'
+  | 'profile-exists'
+  | 'profile-reserved'
+  | 'profile-create-failed'
+  | 'profile-delete-failed'
   | 'too-many-profiles'
   | 'launcher-unavailable'
   | 'internal-error'
@@ -55,6 +61,11 @@ export interface ProfileSummary {
   current: boolean
   state: ProfileState
   bundles: number
+  /**
+   * Whether the menu may offer to delete this profile. The Host is the authority:
+   * the running profile and the app-managed `desktop` profile are never deletable.
+   */
+  deletable: boolean
   updatedAt?: number
   error?: RuntimeErrorCode
 }
@@ -104,14 +115,24 @@ export interface StopResponse {
   stopped: boolean
 }
 
+/** `POST /api/profile-switcher/create` */
+export interface CreateProfileResponse {
+  created: true
+}
+
+/** `POST /api/profile-switcher/delete` */
+export interface DeleteProfileResponse {
+  deleted: true
+}
+
 /** Any non-2xx response body. */
 export interface ErrorResponse {
   error: ApiErrorCode
   detail?: string
 }
 
-/** `POST /api/profile-switcher/open` request body. */
-export interface OpenRequest {
+/** Request body naming one profile: `/open`, `/stop`, `/create`, and `/delete`. */
+export interface ProfileTargetRequest {
   home: string
   name: string
 }

@@ -22,14 +22,15 @@ Desktop 主进程只启动一个写死的 profile。要使用另一个 profile�
 - 按 DSH home 分组列出配置（`~/.dsh`、`~/.dsh-trading` 等）。
 - 点选后目标 Harness 自动启动，就绪后全屏接管。
 - 返回时立即停止目标服务器；无人使用时会自动回收。
-- 纯浏览器环境（无 Desktop preload）自动退化为新标签页打开。
+- 纯浏览器环境（无 Desktop preload）自动退化为系统浏览器打开。
+- 可直接在菜单里新建与删除配置；新建的是能立刻打开的 Web 配置。
 
 ## 环境要求
 
 | 要求                   | 说明                                                                                |
 | ---------------------- | ----------------------------------------------------------------------------------- |
-| DeepSeek Harness 0.2.x | 已在 Desktop/runtime `0.2.1-rc.3` 验证；依赖认证路由注册表 `ctx.connection.fetch`。 |
-| Desktop 应用           | 全屏内嵌依赖 Desktop 浏览器租约桥；`dsh web` 退化为新标签页。                       |
+| DeepSeek Harness 0.2.x | 已在 Desktop/runtime `0.2.1-rc.5` 验证；依赖认证路由注册表 `ctx.connection.fetch`。 |
+| Desktop 应用           | 全屏内嵌依赖 Desktop 浏览器租约桥；`dsh web` 退化为系统浏览器。                     |
 | Node.js ≥ 20           | 仅在通过 `PATH` 启动 `dsh` 时需要。                                                 |
 | 目标配置               | 必须包含 `@deepseek-ai/dsh-web-app`；其第三方插件的 peer 依赖需装进该 profile。     |
 
@@ -64,8 +65,18 @@ dsh plugin --profile desktop add dsh-profile-switcher
 1. 点击侧边栏品牌位中的配置按钮。
 2. 选择一个配置（当前配置禁用，运行中的配置有标记）。
 3. 菜单关闭，目标全屏启动。
-4. 就绪后目标 UI 接管；顶栏保留「返回默认配置」和「在新标签页打开」。
+4. 就绪后目标 UI 接管；顶栏保留「返回默认配置」和「在浏览器打开」。
 5. 点击「返回」会销毁 guest、释放租约并停止目标服务器。
+
+### 新建与删除配置
+
+- 菜单底部的「新建配置」展开一个内联名称输入框。新配置是当前 home 下的 Web 配置
+  （`@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-web-app`），建完即可打开；要给它装
+  插件用 `dsh plugin --profile <名> add <包>`。
+- 每一行的删除按钮先进入确认态，再点一次才删除；删除会把该配置里已装的插件一起删掉。
+  当前配置与应用托管的 `desktop` 配置不提供删除操作。
+- 「在浏览器打开」把目标交给默认浏览器。桌面壳把 `window.open` 转成
+  `shell.openExternal`，是标签页还是新窗口由浏览器决定，插件无法指定。
 
 如果菜单提示找不到 dsh 启动器，请设置 `config.dshPath` 或把 `dsh` 放进 `PATH`。
 未认证或跨站请求会被平台 `/api` 的 Host/Origin fence 以 401/403 拒绝。
@@ -113,7 +124,9 @@ dsh plugin --profile desktop add dsh-profile-switcher
 ## 兼容性与已知限制
 
 - 依赖 `ctx.connection.fetch`；不支持缺少该注册表的旧版 DSH，插件会打印明确诊断。
-- 全屏内嵌仅限 Desktop；`dsh web` 会在新标签页打开目标。
+- 全屏内嵌仅限 Desktop；`dsh web` 会在系统浏览器打开目标。
+- 删除配置不可撤销，会连同该配置里已装的插件一起删除；菜单需要二次点击确认。
+- 新建的配置不含第三方插件，需要 `dsh plugin` 另行安装。
 - 侧边栏收起为 rail 时不渲染品牌位，需要先展开。
 - guest 没有 Desktop preload，依赖桌面能力的操作在 guest 内退化为 Web 行为。
 - 一个页面持有一个目标服务器；两个窗口打开同一配置时，任一窗口返回都会停止服务器。

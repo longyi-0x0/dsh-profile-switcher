@@ -22,9 +22,9 @@ export function listing(overrides: Partial<ListResponse> = {}): ListResponse {
         label: '~/.dsh',
         current: true,
         profiles: [
-          { name: 'desktop', current: true, state: 'idle', bundles: 2 },
-          { name: 'web', current: false, state: 'idle', bundles: 1 },
-          { name: 'trading', current: false, state: 'ready', bundles: 3 },
+          { name: 'desktop', current: true, state: 'idle', bundles: 2, deletable: false },
+          { name: 'web', current: false, state: 'idle', bundles: 1, deletable: true },
+          { name: 'trading', current: false, state: 'ready', bundles: 3, deletable: true },
         ],
       },
     ],
@@ -56,6 +56,8 @@ export function createTestRuntime(
     open: vi.fn(async (): Promise<StatusResponse> => ({ state: 'starting' })),
     status: vi.fn(async (): Promise<StatusResponse> => ({ state: 'ready', url: PROFILE_URL })),
     stop: vi.fn(async () => ({ state: 'idle' as const, stopped: true })),
+    create: vi.fn(async () => ({ created: true as const })),
+    remove: vi.fn(async () => ({ deleted: true as const })),
     ...options.api,
   }
   const store = createStore({ ...INITIAL_STATE, ...options.state })

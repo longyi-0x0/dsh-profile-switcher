@@ -44,6 +44,6 @@ describe('BrandTrigger', () => {
   it('announces the browser fallback', () => {
     const runtime = createTestRuntime({ state: { notice: 'web-fallback' } })
     const { getByRole } = runtime.render(<BrandTrigger />)
-    expect(getByRole('status').textContent).toContain('new tab')
+    expect(getByRole('status').textContent).toContain('browser')
   })
 })
