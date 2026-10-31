@@ -6,9 +6,10 @@
  * markup can never collide with the Host stylesheet.
  */
 export const STYLES = `
-.dps-brandWrap{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;width:100%;max-width:100%;overflow:hidden}
+.dps-brandWrap{display:flex;align-items:center;gap:0;min-width:0;width:100%;max-width:100%;overflow:hidden}
 .dps-brandWordmark{flex:none;display:block;color:var(--dsw-alias-label-primary)}
-.dps-brandPill{flex:none;display:inline-flex;align-items:center;gap:4px;max-width:96px;height:20px;padding:0 7px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:11px;line-height:1;cursor:pointer;-webkit-app-region:no-drag}
+.dps-brandSpacer{flex:1 1 12px;min-width:6px}
+.dps-brandPill{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;gap:4px;max-width:96px;height:22px;padding:0 8px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:11px;line-height:1;cursor:pointer;-webkit-app-region:no-drag}
 .dps-brandPill:hover,.dps-brandPillOpen{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
 .dps-brandPill:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}
 .dps-brandProfile{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

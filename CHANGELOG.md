@@ -21,8 +21,8 @@ All notable changes to this project are documented here. The format follows
   target in a real application window. The built host ships in the package for the publishing
   platform, so an update brings it along; `config.windowShell`, `~/.cargo/bin`, `~/.local/bin`,
   and `PATH` are the fallbacks. The URL travels on stdin; without a host the action is hidden.
-- The sidebar brand row is now the wordmark on the left and a profile dropdown pill on the
-  right.
+- The sidebar brand row is now the wordmark on the left and a profile dropdown pill after a
+  spacer; the wordmark renders at 20 px.
 - Creating a profile uses a centered modal dialog with validation, focus trapping, and
   Escape/backdrop cancel; the menu no longer carries an inline form or a hint line.
 

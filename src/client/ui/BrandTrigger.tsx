@@ -30,7 +30,8 @@ export function BrandTrigger() {
 
   return (
     <span className="dps-brandWrap">
-      <Wordmark height={16} className="dps-brandWordmark" />
+      <Wordmark height={20} className="dps-brandWordmark" />
+      <span className="dps-brandSpacer" aria-hidden="true" />
       <button
         ref={triggerRef}
         type="button"
