@@ -33,12 +33,13 @@ full-screen leased webview with one-click return to the default profile.
 
 ## Requirements
 
-| Requirement            | Notes                                                                                                                  |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| DeepSeek Harness 0.2.x | Tested with Desktop/runtime `0.2.1-rc.5`. Requires the authenticated `ctx.connection.fetch` route registry.            |
-| Desktop app            | Full-screen embedding uses the Desktop browser-lease bridge. `dsh web` degrades to the system browser.                 |
-| Node.js ≥ 20           | Only needed when the plugin launches a `dsh` executable discovered on `PATH`.                                          |
-| Target profile         | Must include `@deepseek-ai/dsh-web-app`; third-party bundles with peer dependencies must be installed in that profile. |
+| Requirement              | Notes                                                                                                                        |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| DeepSeek Harness 0.2.x   | Tested with Desktop/runtime `0.2.1-rc.5`. Requires the authenticated `ctx.connection.fetch` route registry.                  |
+| Desktop app              | Full-screen embedding uses the Desktop browser-lease bridge. `dsh web` degrades to the system browser.                       |
+| Node.js ≥ 20             | Only needed when the plugin launches a `dsh` executable discovered on `PATH`.                                                |
+| Native window (optional) | `cargo install --path native-window`, or `config.windowShell`. Uses the platform WebView (WKWebView / WebView2 / WebKitGTK). |
+| Target profile           | Must include `@deepseek-ai/dsh-web-app`; third-party bundles with peer dependencies must be installed in that profile.       |
 
 ## Install
 
@@ -89,10 +90,14 @@ dsh plugin --profile desktop add dsh-profile-switcher
   together with the packages installed into it. The running profile and the app-managed
   `desktop` profile offer no delete action.
 
-**Open in browser** hands the target to the default browser. Desktop routes `window.open`
-through `shell.openExternal`, so whether that becomes a tab or a window is the browser's
-choice, not the plugin's. A second native application window would need a Desktop window API
-that a Host plugin does not have; see ADR 0006.
+**Open in new window** opens the target in a native application window: `native-window/` is a
+small tao + wry program (`dsh-profile-window`) that hosts one WebView, not a browser tab. It
+is optional — build it once with `cargo install --path native-window` (that puts
+`dsh-profile-window` on `PATH`) or point `config.windowShell` at it; without a host the button
+is hidden. If the host cannot start, the target opens in the browser and the top bar says so.
+
+**Open in browser** is the ordinary handoff: Desktop routes `window.open` through
+`shell.openExternal`, so whether that becomes a tab or a window is the browser's choice.
 
 If the menu reports _No dsh launcher was found_, set `config.dshPath` or install `dsh` on
 `PATH` (see Configuration). Unauthenticated or cross-site requests to the plugin routes
@@ -117,6 +122,7 @@ Add `config` to the plugin row in your profile patch:
 | `discoverSiblingHomes` | `true`   | Scan `~/.dsh-*` and `~/.dsh_*` sibling homes.                                                           |
 | `launcher`             | `auto`   | `auto`, `desktop-cli`, or `path`. `auto` prefers the CLI shipped with Desktop and then `dsh` on `PATH`. |
 | `dshPath`              | unset    | Explicit CLI path; disables discovery.                                                                  |
+| `windowShell`          | unset    | Path to `dsh-profile-window`; unset discovers `PATH` and the checkout build.                            |
 | `startTimeoutMs`       | `120000` | How long a target may take to print its URL (5s–600s).                                                  |
 | `idleStopMs`           | `900000` | Stop a target after this long without a client heartbeat (60s–24h); `0` disables idle recovery.         |
 | `maxRunning`           | `3`      | Maximum concurrent target servers (1–10).                                                               |

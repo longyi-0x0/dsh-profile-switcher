@@ -6,7 +6,16 @@ import jsxA11y from 'eslint-plugin-jsx-a11y'
 import prettier from 'eslint-config-prettier'
 
 export default tseslint.config(
-  { ignores: ['lib/**', 'coverage/**', 'node_modules/**', 'docs/**'] },
+  {
+    ignores: [
+      'lib/**',
+      'coverage/**',
+      'node_modules/**',
+      'docs/**',
+      '.cargo-home/**',
+      'native-window/target/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

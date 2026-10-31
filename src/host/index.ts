@@ -10,7 +10,8 @@
  * - `launcher` resolves the dsh executable to spawn;
  * - `supervisor` owns every child process and its lifecycle;
  * - `profile-admin` creates and deletes profile directories;
- * - `routes` exposes the six operations below the authenticated `/api` carrier.
+ * - `window-shell` starts the optional native window host;
+ * - `routes` exposes the seven operations below the authenticated `/api` carrier.
  */
 import { spawn } from 'node:child_process'
 import {
@@ -25,7 +26,8 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { homedir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { normalizeConfig } from '../shared/config'
 import type { HostContext } from './context'
 import { detectCurrentProfile } from './current-profile'
@@ -34,7 +36,14 @@ import { resolveLauncher } from './launcher'
 import { createScopedLogger } from './logger'
 import { createProcessOperations, type SpawnLike } from './process'
 import type { ProfileAdminDeps } from './profile-admin'
+import {
+  launchWindowShell,
+  resolveWindowShell,
+  type ShellChild,
+  type ShellSpawn,
+} from './window-shell'
 import { listProfileDirectories } from './profiles'
+import { sanitizeDetail } from './redact'
 import { registerRoutes } from './routes'
 import { ProfileSupervisor, type ProfileFiles } from './supervisor'
 
@@ -107,6 +116,20 @@ function createProfileAdmin(): ProfileAdminDeps {
     },
   }
 }
+
+/**
+ * Adapt `child_process.spawn` to the window host's structural seam. The child is detached
+ * so it outlives a plugin reload and exits with its own window.
+ *
+ * @param command - window host program.
+ * @param args - `--title` and the profile name.
+ */
+const spawnWindowShell: ShellSpawn = (command, args) =>
+  spawn(command, args, {
+    stdio: ['pipe', 'ignore', 'ignore'],
+    detached: true,
+    windowsHide: true,
+  }) as unknown as ShellChild
 
 /**
  * Adapt `child_process.spawn` to the supervisor's structural seam.
@@ -192,10 +215,37 @@ export function apply(ctx: HostContext, rawConfig?: unknown): void {
     'profile-switcher: process exit hook',
   )
 
+  // A native window needs a window host: `native-window/` in the package, `cargo install
+  // --path native-window`, or an explicit `config.windowShell`. Without one the Client
+  // hides the action instead of failing it.
+  const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const windowShell = resolveWindowShell({
+    configured: config.windowShell,
+    env: process.env,
+    platform: process.platform,
+    exists: (path) => existsSync(path),
+    isExecutable,
+    packageRoot,
+  })
+
   const routesRegistered = registerRoutes(ctx, {
     supervisor,
     files,
     admin: createProfileAdmin(),
+    openWindow: async ({ url, title }) => {
+      if (windowShell === null) return { opened: false, reason: 'unsupported' }
+      try {
+        await launchWindowShell(spawnWindowShell, { command: windowShell, url, title })
+        return { opened: true }
+      } catch (error) {
+        return {
+          opened: false,
+          reason: 'failed',
+          detail: sanitizeDetail(error instanceof Error ? error.message : String(error)),
+        }
+      }
+    },
+    canOpenWindow: windowShell !== null,
     currentHome,
     currentProfile,
     homes,

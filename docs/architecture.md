@@ -43,11 +43,12 @@ Client controller: open → poll status → lease webview → loadURL(token URL)
 | `current-profile.ts` | `DSH_PROFILE` → `DSH_PROFILE_DIR` → `--profile` → Desktop argv layout.                                                                       |
 | `profiles.ts`        | Lists profile directories with manifest bundle count and mtime; skips names the API cannot launch.                                           |
 | `profile-admin.ts`   | Creates and deletes profile directories in the Harness profile layout; owns the reserved/current-profile policy.                             |
+| `window-shell.ts`    | Resolves and starts the optional native window host; the URL travels on stdin.                                                               |
 | `launcher.ts`        | Resolves the Desktop CLI inside `app.asar` under `ELECTRON_RUN_AS_NODE`, or `dsh` on `PATH` (Windows PATHEXT). Builds the child environment. |
 | `web-url.ts`         | Incremental line scanner for `dsh web: <url>`; validates HTTP(S), no credentials, handles ANSI and chunk splits.                             |
 | `process.ts`         | Process-group termination and bounded `waitForExit`.                                                                                         |
 | `supervisor.ts`      | One record per target: state machine, start timeout, max running, heartbeats, idle sweep, exit handling, summaries, diagnostics.             |
-| `routes.ts`          | Six exact Fetch routes, JSON helpers, 16 KiB streamed body reader, error-to-status mapping.                                                  |
+| `routes.ts`          | Seven exact Fetch routes, JSON helpers, 16 KiB streamed body reader, error-to-status mapping.                                                |
 | `redact.ts`          | ANSI stripping, token/URL redaction, bounded details.                                                                                        |
 | `errors.ts`          | `ApiError` carrying a stable code and HTTP status.                                                                                           |
 
@@ -115,6 +116,22 @@ new profile declares resolve from the installation.
 - Creation opens a modal dialog; deletion arms a confirmation on the first row click.
 
 Deletion is irreversible and owns the plugin packages installed into that profile.
+
+## Native window
+
+`POST /window` opens a ready target in a real application window. The Desktop shell offers no
+window API to plugins, so this package carries its own host: `native-window/` is a separate
+tao + wry program (`dsh-profile-window`) that shows one window around one WebView.
+
+- The plugin does not ship or build a binary. It resolves the host from `config.windowShell`,
+  then `PATH`, then the checkout's `native-window/target/release/`; without one the Client
+  hides the action.
+- The launch URL is written to the host's **stdin**; argv carries only `--title <profile>`,
+  because `ps` exposes every process's command line.
+- The host stays on the target's origin: other navigations and pop-ups go to the system
+  browser. It exits when its window closes, independent of the embedded guest.
+- A failed spawn answers `{ opened: false, reason: "failed" }`; the Client falls back to the
+  browser handoff and says so in the top bar.
 
 ## Lease lifecycle
 

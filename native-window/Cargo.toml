@@ -1,0 +1,20 @@
+[package]
+name = "dsh-profile-window"
+version = "0.1.0"
+edition = "2021"
+description = "Native webview window for dsh-profile-switcher: one window, one WebView, no browser chrome"
+license = "MIT"
+publish = false
+
+[[bin]]
+name = "dsh-profile-window"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+tao = "0.37"
+wry = "0.57"
+
+[profile.release]
+strip = true
+lto = true

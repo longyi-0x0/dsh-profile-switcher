@@ -22,6 +22,8 @@ export interface ProfileSwitcherConfig {
   launcher: LauncherPreference
   /** Explicit `dsh` CLI path; bypasses discovery. */
   dshPath: string | null
+  /** Native window host program; null discovers it on PATH or in the checkout. */
+  windowShell: string | null
   /** How long a target profile may take to print its URL. */
   startTimeoutMs: number
   /** Stop a target server after this long without a Client heartbeat; 0 disables. */
@@ -39,6 +41,7 @@ export const DEFAULT_CONFIG: Readonly<ProfileSwitcherConfig> = Object.freeze({
   discoverSiblingHomes: true,
   launcher: 'auto',
   dshPath: null,
+  windowShell: null,
   startTimeoutMs: 120_000,
   idleStopMs: 900_000,
   maxRunning: 3,
@@ -51,6 +54,7 @@ const KNOWN_KEYS = new Set<keyof ProfileSwitcherConfig>([
   'discoverSiblingHomes',
   'launcher',
   'dshPath',
+  'windowShell',
   'startTimeoutMs',
   'idleStopMs',
   'maxRunning',
@@ -173,6 +177,15 @@ export function normalizeConfig(
     }
   }
 
+  let windowShell: string | null = null
+  if (record.windowShell !== undefined && record.windowShell !== null) {
+    if (typeof record.windowShell === 'string' && record.windowShell.trim() !== '') {
+      windowShell = record.windowShell.trim()
+    } else {
+      warn('config.windowShell must be a non-empty string; using discovery')
+    }
+  }
+
   let logLevel = DEFAULT_CONFIG.logLevel
   if (record.logLevel !== undefined) {
     const candidate = record.logLevel
@@ -202,6 +215,7 @@ export function normalizeConfig(
     discoverSiblingHomes,
     launcher,
     dshPath,
+    windowShell,
     startTimeoutMs,
     idleStopMs,
     maxRunning,

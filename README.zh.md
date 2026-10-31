@@ -27,12 +27,13 @@ Desktop 主进程只启动一个写死的 profile。要使用另一个 profile�
 
 ## 环境要求
 
-| 要求                   | 说明                                                                                |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| DeepSeek Harness 0.2.x | 已在 Desktop/runtime `0.2.1-rc.5` 验证；依赖认证路由注册表 `ctx.connection.fetch`。 |
-| Desktop 应用           | 全屏内嵌依赖 Desktop 浏览器租约桥；`dsh web` 退化为系统浏览器。                     |
-| Node.js ≥ 20           | 仅在通过 `PATH` 启动 `dsh` 时需要。                                                 |
-| 目标配置               | 必须包含 `@deepseek-ai/dsh-web-app`；其第三方插件的 peer 依赖需装进该 profile。     |
+| 要求                   | 说明                                                                                                                 |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| DeepSeek Harness 0.2.x | 已在 Desktop/runtime `0.2.1-rc.5` 验证；依赖认证路由注册表 `ctx.connection.fetch`。                                  |
+| Desktop 应用           | 全屏内嵌依赖 Desktop 浏览器租约桥；`dsh web` 退化为系统浏览器。                                                      |
+| Node.js ≥ 20           | 仅在通过 `PATH` 启动 `dsh` 时需要。                                                                                  |
+| 原生窗口（可选）       | `cargo install --path native-window` 或 `config.windowShell`；使用系统 WebView（WKWebView / WebView2 / WebKitGTK）。 |
+| 目标配置               | 必须包含 `@deepseek-ai/dsh-web-app`；其第三方插件的 peer 依赖需装进该 profile。                                      |
 
 ## 安装
 
@@ -75,9 +76,13 @@ dsh plugin --profile desktop add dsh-profile-switcher
   插件用 `dsh plugin --profile <名> add <包>`。
 - 每一行的删除按钮先进入确认态，再点一次才删除；删除会把该配置里已装的插件一起删掉。
   当前配置与应用托管的 `desktop` 配置不提供删除操作。
-- 「在浏览器打开」把目标交给默认浏览器。桌面壳把 `window.open` 转成
-  `shell.openExternal`，是标签页还是新窗口由浏览器决定，插件无法指定。再开一个原生
-  应用窗口需要桌面壳提供窗口接口，Host 插件没有这个能力，见 ADR 0006。
+- 「在新窗口打开」把目标放进一个**原生应用窗口**：`native-window/` 是一个 tao + wry 写的
+  小程序（`dsh-profile-window`），一窗一个 WebView，不是浏览器标签页。它是可选的——用
+  `cargo install --path native-window` 装一次（把 `dsh-profile-window` 放进 `PATH`），
+  或用 `config.windowShell` 指定路径；没有窗口组件时按钮不显示。组件启动失败时改为在
+  浏览器打开，并在顶栏提示。
+- 「在浏览器打开」是普通交接：桌面壳把 `window.open` 转成 `shell.openExternal`，是标签页
+  还是新窗口由浏览器决定。
 
 如果菜单提示找不到 dsh 启动器，请设置 `config.dshPath` 或把 `dsh` 放进 `PATH`。
 未认证或跨站请求会被平台 `/api` 的 Host/Origin fence 以 401/403 拒绝。
@@ -101,6 +106,7 @@ dsh plugin --profile desktop add dsh-profile-switcher
 | `discoverSiblingHomes` | `true`   | 是否扫描 `~/.dsh-*` / `~/.dsh_*`。                                       |
 | `launcher`             | `auto`   | `auto` / `desktop-cli` / `path`；auto 优先 Desktop 自带 CLI，其次 PATH。 |
 | `dshPath`              | 无       | 显式 CLI 路径，关闭自动发现。                                            |
+| `windowShell`          | 无       | `dsh-profile-window` 的路径；留空则在 `PATH` 与包内构建产物中查找。      |
 | `startTimeoutMs`       | `120000` | 目标打印 URL 的最长等待（5s–600s）。                                     |
 | `idleStopMs`           | `900000` | 无心跳后停止目标服务器（60s–24h）；`0` 关闭。                            |
 | `maxRunning`           | `3`      | 同时运行的目标服务器上限（1–10）。                                       |

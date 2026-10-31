@@ -17,6 +17,9 @@ All notable changes to this project are documented here. The format follows
 - `POST /api/profile-switcher/create` and `POST /api/profile-switcher/delete` on the
   authenticated carrier, with `profile-exists`, `profile-reserved`, `profile-create-failed`,
   and `profile-delete-failed` error codes.
+- **Open in new window**: an optional native window host (`native-window/`, tao + wry) shows a
+  ready target in a real application window. The plugin resolves it from `config.windowShell`,
+  `PATH`, or the checkout build; the URL travels on stdin. Without a host the action is hidden.
 - The sidebar brand row is now the wordmark on the left and a profile dropdown pill on the
   right.
 - Creating a profile uses a centered modal dialog with validation, focus trapping, and

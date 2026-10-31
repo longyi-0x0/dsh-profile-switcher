@@ -29,6 +29,7 @@ describe('normalizeConfig', () => {
       discoverSiblingHomes: false,
       launcher: 'path',
       dshPath: ' /opt/bin/dsh ',
+      windowShell: ' /opt/bin/dsh-profile-window ',
       startTimeoutMs: 30_000,
       idleStopMs: 0,
       maxRunning: 2,
@@ -40,6 +41,7 @@ describe('normalizeConfig', () => {
     expect(config.discoverSiblingHomes).toBe(false)
     expect(config.launcher).toBe('path')
     expect(config.dshPath).toBe('/opt/bin/dsh')
+    expect(config.windowShell).toBe('/opt/bin/dsh-profile-window')
     expect(config.startTimeoutMs).toBe(30_000)
     expect(config.idleStopMs).toBe(0)
     expect(config.maxRunning).toBe(2)
@@ -54,6 +56,7 @@ describe('normalizeConfig', () => {
       discoverSiblingHomes: 'yes',
       launcher: 'nope',
       dshPath: 42,
+      windowShell: 42,
       logLevel: 'loud',
       startTimeoutMs: 'soon',
     })

@@ -28,6 +28,7 @@ const LIST: ListResponse = {
   current: { home: '/h', name: 'desktop' },
   homes: [],
   canLaunch: true,
+  canOpenWindow: false,
   launcher: { kind: 'dsh' },
   limits: {
     startTimeoutMs: 1,
@@ -69,6 +70,15 @@ describe('createApi', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ home: '/h', name: 'web' }),
     })
+  })
+
+  it('posts a window request and reads the answer', async () => {
+    const { api, fetchImpl } = apiWith(() => fakeResponse({ opened: false, reason: 'unsupported' }))
+    await expect(api.openWindow('/h', 'web')).resolves.toEqual({
+      opened: false,
+      reason: 'unsupported',
+    })
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe(`${API_PREFIX}/window`)
   })
 
   it('posts profile mutations to create and delete', async () => {

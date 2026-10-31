@@ -3,3 +3,5 @@ lib/
 coverage/
 pnpm-lock.yaml
 docs/design/
+.cargo-home/
+native-window/target/

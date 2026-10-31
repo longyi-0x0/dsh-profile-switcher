@@ -13,6 +13,7 @@ export const STYLES = `
 .dps-brandPill:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}
 .dps-brandProfile{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dps-brandChev{flex:none;font-size:8px;opacity:.85}
+.dps-chip{flex:none;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 8px;border-radius:999px;background:var(--dsw-alias-bg-layer-2);font-size:10.5px;color:var(--dsw-alias-label-secondary)}
 .dps-menu{position:fixed;z-index:1300;box-sizing:border-box;display:flex;flex-direction:column;gap:1px;padding:6px;overflow:auto;border:1px solid var(--dsw-alias-border-l1);border-radius:10px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);box-shadow:0 14px 36px rgba(0,0,0,.32);font-size:12.5px;line-height:1.4}
 .dps-menuHead{padding:3px 8px 5px;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dsw-alias-label-secondary)}
 .dps-homeGroup{display:flex;flex-direction:column;gap:1px}
