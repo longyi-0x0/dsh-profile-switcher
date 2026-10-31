@@ -27,13 +27,13 @@ Desktop 主进程只启动一个写死的 profile。要使用另一个 profile�
 
 ## 环境要求
 
-| 要求                   | 说明                                                                                                                 |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| DeepSeek Harness 0.2.x | 已在 Desktop/runtime `0.2.1-rc.5` 验证；依赖认证路由注册表 `ctx.connection.fetch`。                                  |
-| Desktop 应用           | 全屏内嵌依赖 Desktop 浏览器租约桥；`dsh web` 退化为系统浏览器。                                                      |
-| Node.js ≥ 20           | 仅在通过 `PATH` 启动 `dsh` 时需要。                                                                                  |
-| 原生窗口（可选）       | `cargo install --path native-window` 或 `config.windowShell`；使用系统 WebView（WKWebView / WebView2 / WebKitGTK）。 |
-| 目标配置               | 必须包含 `@deepseek-ai/dsh-web-app`；其第三方插件的 peer 依赖需装进该 profile。                                      |
+| 要求                   | 说明                                                                                                                                                 |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DeepSeek Harness 0.2.x | 已在 Desktop/runtime `0.2.1-rc.5` 验证；依赖认证路由注册表 `ctx.connection.fetch`。                                                                  |
+| Desktop 应用           | 全屏内嵌依赖 Desktop 浏览器租约桥；`dsh web` 退化为系统浏览器。                                                                                      |
+| Node.js ≥ 20           | 仅在通过 `PATH` 启动 `dsh` 时需要。                                                                                                                  |
+| 原生窗口               | 随包发布当前平台成品；其它平台用 `pnpm build:native` 或 `cargo install --path native-window`。使用系统 WebView（WKWebView / WebView2 / WebKitGTK）。 |
+| 目标配置               | 必须包含 `@deepseek-ai/dsh-web-app`；其第三方插件的 peer 依赖需装进该 profile。                                                                      |
 
 ## 安装
 
@@ -77,10 +77,10 @@ dsh plugin --profile desktop add dsh-profile-switcher
 - 每一行的删除按钮先进入确认态，再点一次才删除；删除会把该配置里已装的插件一起删掉。
   当前配置与应用托管的 `desktop` 配置不提供删除操作。
 - 「在新窗口打开」把目标放进一个**原生应用窗口**：`native-window/` 是一个 tao + wry 写的
-  小程序（`dsh-profile-window`），一窗一个 WebView，不是浏览器标签页。它是可选的——用
-  `cargo install --path native-window` 装一次（把 `dsh-profile-window` 放进 `PATH`），
-  或用 `config.windowShell` 指定路径；没有窗口组件时按钮不显示。组件启动失败时改为在
-  浏览器打开，并在顶栏提示。
+  小程序（`dsh-profile-window`），一窗一个 WebView，不是浏览器标签页。当前平台的成品随包
+  一起发布（`native-window/bin/`），更新插件就会带下来；其它平台用 `pnpm build:native`
+  构建、或 `cargo install --path native-window`、或用 `config.windowShell` 指定。没有
+  组件时按钮不显示；组件启动失败时改为在浏览器打开，并在顶栏提示。
 - 「在浏览器打开」是普通交接：桌面壳把 `window.open` 转成 `shell.openExternal`，是标签页
   还是新窗口由浏览器决定。
 
@@ -100,18 +100,18 @@ dsh plugin --profile desktop add dsh-profile-switcher
         maxRunning: 3
 ```
 
-| 字段                   | 默认值   | 说明                                                                     |
-| ---------------------- | -------- | ------------------------------------------------------------------------ |
-| `additionalHomes`      | `[]`     | 额外 home，与当前 home、`~/.dsh-*` 同级 home 一同列出。                  |
-| `discoverSiblingHomes` | `true`   | 是否扫描 `~/.dsh-*` / `~/.dsh_*`。                                       |
-| `launcher`             | `auto`   | `auto` / `desktop-cli` / `path`；auto 优先 Desktop 自带 CLI，其次 PATH。 |
-| `dshPath`              | 无       | 显式 CLI 路径，关闭自动发现。                                            |
-| `windowShell`          | 无       | `dsh-profile-window` 的路径；留空则在 `PATH` 与包内构建产物中查找。      |
-| `startTimeoutMs`       | `120000` | 目标打印 URL 的最长等待（5s–600s）。                                     |
-| `idleStopMs`           | `900000` | 无心跳后停止目标服务器（60s–24h）；`0` 关闭。                            |
-| `maxRunning`           | `3`      | 同时运行的目标服务器上限（1–10）。                                       |
-| `killGraceMs`          | `5000`   | SIGTERM 到 SIGKILL 的宽限期（100ms–60s）。                               |
-| `logLevel`             | `warn`   | `debug` / `info` / `warn` / `error`。                                    |
+| 字段                   | 默认值   | 说明                                                                                         |
+| ---------------------- | -------- | -------------------------------------------------------------------------------------------- |
+| `additionalHomes`      | `[]`     | 额外 home，与当前 home、`~/.dsh-*` 同级 home 一同列出。                                      |
+| `discoverSiblingHomes` | `true`   | 是否扫描 `~/.dsh-*` / `~/.dsh_*`。                                                           |
+| `launcher`             | `auto`   | `auto` / `desktop-cli` / `path`；auto 优先 Desktop 自带 CLI，其次 PATH。                     |
+| `dshPath`              | 无       | 显式 CLI 路径，关闭自动发现。                                                                |
+| `windowShell`          | 无       | `dsh-profile-window` 的路径；留空则用包内成品，再查 `~/.cargo/bin`、`~/.local/bin`、`PATH`。 |
+| `startTimeoutMs`       | `120000` | 目标打印 URL 的最长等待（5s–600s）。                                                         |
+| `idleStopMs`           | `900000` | 无心跳后停止目标服务器（60s–24h）；`0` 关闭。                                                |
+| `maxRunning`           | `3`      | 同时运行的目标服务器上限（1–10）。                                                           |
+| `killGraceMs`          | `5000`   | SIGTERM 到 SIGKILL 的宽限期（100ms–60s）。                                                   |
+| `logLevel`             | `warn`   | `debug` / `info` / `warn` / `error`。                                                        |
 
 非法值会写入插件日志并回退默认值，不会因为配置笔误导致侧边栏不可用。
 
@@ -144,14 +144,15 @@ dsh plugin --profile desktop add dsh-profile-switcher
 
 ## 故障排查
 
-| 现象                         | 处理                                                                                                |
-| ---------------------------- | --------------------------------------------------------------------------------------------------- |
-| 提示找不到启动器             | 设置 `config.dshPath`，或把 `dsh` 安装到 `PATH`。Desktop 会自动发现自带 CLI。                       |
-| 控制台 401 / 会话失效        | 刷新 Harness 页面；路由需要浏览器会话 cookie。                                                      |
-| 提示当前 Harness 版本不支持  | 升级到带 `ctx.connection.fetch` 的 0.2.x。                                                          |
-| 目标启动后立即退出           | 直接在终端运行 `dsh --profile <name>` 查看它的启动错误，常见原因是缺少 `dsh-web-app` 或 peer 依赖。 |
-| 挂着窗口一段时间后服务器消失 | 已超过 `idleStopMs` 无心跳；重新打开，或增大/关闭空闲回收。                                         |
-| 内嵌页显示登录或连接错误     | 目标 profile 自身的服务器拒绝会话；查看其日志。                                                     |
+| 现象                         | 处理                                                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 提示找不到启动器             | 设置 `config.dshPath`，或把 `dsh` 安装到 `PATH`。Desktop 会自动发现自带 CLI。                                                   |
+| 「在新窗口打开」是灰的       | 没装原生窗口组件。`cargo install --path native-window`（或把编译好的 `dsh-profile-window` 拷进 `~/.cargo/bin`），然后重启应用。 |
+| 控制台 401 / 会话失效        | 刷新 Harness 页面；路由需要浏览器会话 cookie。                                                                                  |
+| 提示当前 Harness 版本不支持  | 升级到带 `ctx.connection.fetch` 的 0.2.x。                                                                                      |
+| 目标启动后立即退出           | 直接在终端运行 `dsh --profile <name>` 查看它的启动错误，常见原因是缺少 `dsh-web-app` 或 peer 依赖。                             |
+| 挂着窗口一段时间后服务器消失 | 已超过 `idleStopMs` 无心跳；重新打开，或增大/关闭空闲回收。                                                                     |
+| 内嵌页显示登录或连接错误     | 目标 profile 自身的服务器拒绝会话；查看其日志。                                                                                 |
 
 需要生命周期诊断时设置 `logLevel: debug`；日志中的启动 URL 会被脱敏。
 

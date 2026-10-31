@@ -13,29 +13,30 @@ git diff --exit-code -- lib
 npm pack --dry-run
 ```
 
-| Area            | What it proves                                                                                                     | Where                                |
-| --------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
-| Config          | Defaults, clamping, unknown keys, frozen result                                                                    | `tests/shared/config.test.ts`        |
-| Discovery       | Current/extra/sibling homes, ordering, unreadable directories, labels                                              | `tests/host/homes.test.ts`           |
-| Profile listing | Manifest bundles, malformed manifest, invalid names, mtime                                                         | `tests/host/profiles.test.ts`        |
-| Current profile | Every detection source and failure                                                                                 | `tests/host/current-profile.test.ts` |
-| Launcher        | Desktop CLI, explicit path, PATH, Windows PATHEXT, env scrub                                                       | `tests/host/launcher.test.ts`        |
-| URL parsing     | Chunk splits, ANSI, invalid scheme/credentials, notices                                                            | `tests/host/web-url.test.ts`         |
-| Redaction       | ANSI, tokens, URL origins, bounded details                                                                         | `tests/host/redact.test.ts`          |
-| Process         | Graceful exit, SIGKILL escalation, taskkill, missing pid                                                           | `tests/host/process.test.ts`         |
-| Supervisor      | Start/ready/exit/timeout/spawn error, reuse, maxRunning, stop, idle, heartbeats, dispose                           | `tests/host/supervisor.test.ts`      |
-| Profile admin   | Manifest text, create order/cleanup, reserved and current policy, failed writes and removals                       | `tests/host/profile-admin.test.ts`   |
-| Routes          | Six routes, no URL in `/list`, URL in `/status`, 400/404/409/413/429/500, missing registry, create/delete refusals | `tests/host/routes.test.ts`          |
-| Composition     | Real temp home: create lands on disk and in `/list`, delete removes it, `desktop` protection                       | `tests/host/index.test.ts`           |
-| Client API      | Methods, query encoding, status-to-code mapping, aborts, transport errors                                          | `tests/client/api.test.ts`           |
-| Store           | Snapshot identity, notifications, no-op updates                                                                    | `tests/client/store.test.ts`         |
-| Controller      | Embed, polling, errors, timeout, cancel, retry, web fallback, popup block, heartbeat, dispose                      | `tests/client/controller.test.ts`    |
-| Guest           | Official attributes, one navigation, error paths, aborted retry, exactly-once release, late release                | `tests/client/embed.test.ts`         |
-| UI              | Menu grouping/state/focus/keys/outside click, create form, delete confirmation, trigger, error card, guest mount   | `tests/client/*.test.tsx`            |
-| Startup         | The brand trigger reads the active profile from the first `/list` before the menu opens                            | `tests/client/apply.test.tsx`        |
-| i18n            | Key and placeholder parity, fallback, every error code                                                             | `tests/client/i18n.test.ts`          |
-| Artifact        | Loader id, module requests, four registrations, Host exports                                                       | `scripts/smoke-client.mjs`           |
-| Package         | Manifest, exports, files, patch row, locale metadata, icon, wrapper id                                             | `scripts/check-package.mjs`          |
+| Area            | What it proves                                                                                                                             | Where                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| Config          | Defaults, clamping, unknown keys, frozen result                                                                                            | `tests/shared/config.test.ts`        |
+| Discovery       | Current/extra/sibling homes, ordering, unreadable directories, labels                                                                      | `tests/host/homes.test.ts`           |
+| Profile listing | Manifest bundles, malformed manifest, invalid names, mtime                                                                                 | `tests/host/profiles.test.ts`        |
+| Current profile | Every detection source and failure                                                                                                         | `tests/host/current-profile.test.ts` |
+| Launcher        | Desktop CLI, explicit path, PATH, Windows PATHEXT, env scrub                                                                               | `tests/host/launcher.test.ts`        |
+| URL parsing     | Chunk splits, ANSI, invalid scheme/credentials, notices                                                                                    | `tests/host/web-url.test.ts`         |
+| Redaction       | ANSI, tokens, URL origins, bounded details                                                                                                 | `tests/host/redact.test.ts`          |
+| Process         | Graceful exit, SIGKILL escalation, taskkill, missing pid                                                                                   | `tests/host/process.test.ts`         |
+| Supervisor      | Start/ready/exit/timeout/spawn error, reuse, maxRunning, stop, idle, heartbeats, dispose                                                   | `tests/host/supervisor.test.ts`      |
+| Profile admin   | Manifest text, create order/cleanup, reserved and current policy, failed writes and removals                                               | `tests/host/profile-admin.test.ts`   |
+| Routes          | Six routes, no URL in `/list`, URL in `/status`, 400/404/409/413/429/500, missing registry, create/delete refusals                         | `tests/host/routes.test.ts`          |
+| Composition     | Real temp home: create lands on disk and in `/list`, delete removes it, `desktop` protection                                               | `tests/host/index.test.ts`           |
+| Client API      | Methods, query encoding, status-to-code mapping, aborts, transport errors                                                                  | `tests/client/api.test.ts`           |
+| Store           | Snapshot identity, notifications, no-op updates                                                                                            | `tests/client/store.test.ts`         |
+| Controller      | Embed, polling, errors, timeout, cancel, retry, web fallback, popup block, heartbeat, dispose                                              | `tests/client/controller.test.ts`    |
+| Guest           | Official attributes, one navigation, error paths, aborted retry, exactly-once release, late release                                        | `tests/client/embed.test.ts`         |
+| UI              | Menu grouping/state/focus/keys/outside click, create form, delete confirmation, trigger, error card, guest mount                           | `tests/client/*.test.tsx`            |
+| Startup         | The brand trigger reads the active profile from the first `/list` before the menu opens                                                    | `tests/client/apply.test.tsx`        |
+| i18n            | Key and placeholder parity, fallback, every error code                                                                                     | `tests/client/i18n.test.ts`          |
+| Artifact        | Loader id, module requests, four registrations, Host exports                                                                               | `scripts/smoke-client.mjs`           |
+| Package         | Manifest, exports, files, patch row, locale metadata, icon, wrapper id                                                                     | `scripts/check-package.mjs`          |
+| Window host     | Resolution order (`config`, `~/.cargo/bin`, `~/.local/bin`, `PATH`, checkout), Windows extension, title in argv, URL on stdin, spawn error | `tests/host/window-shell.test.ts`    |
 
 ## Isolated Host smoke (no user state)
 
@@ -90,6 +91,16 @@ rows on Windows when available. Use two profiles, one of them in a sibling home.
 - [ ] Keyboard input, scrolling, charts, and links work inside the guest.
 - [ ] **Open in browser** always hands the target to the system browser and keeps the guest
       usable; Desktop routes `window.open` through `shell.openExternal`.
+- [ ] With the window host installed (`cargo install --path native-window` or a copy in
+      `~/.cargo/bin`), **Open in new window** opens a native application window on the target;
+      its title carries the profile name.
+- [ ] Links that leave the target's origin open in the system browser; the window never
+      becomes a free browser.
+- [ ] Closing that window leaves the embedded guest and the target server untouched; **Back**
+      still stops the server.
+- [ ] The shipped host (or a locally built one) makes the action appear after a restart; a
+      host that fails to start falls back to the browser with the top-bar notice.
+- [ ] `pnpm build:native` refreshes `native-window/bin/<platform>-<arch>/`.
 - [ ] **Back to default** destroys the guest, releases the lease, restores focus, and the host
       session (scroll position, open panel) is intact.
 - [ ] Repeat select/back three times; each run acquires a new lease and leaves no duplicate

@@ -17,6 +17,7 @@ function deps(options: {
   exists?: string[]
   executable?: string[]
   platform?: NodeJS.Platform
+  arch?: NodeJS.Architecture
 }) {
   const exists = new Set(options.exists ?? [])
   const executable = new Set(options.executable ?? [])
@@ -24,11 +25,20 @@ function deps(options: {
     configured: options.configured ?? null,
     env: { PATH: options.path ?? '' },
     platform: options.platform ?? ('darwin' as NodeJS.Platform),
+    arch: options.arch ?? ('arm64' as NodeJS.Architecture),
     exists: (path: string) => exists.has(path),
     isExecutable: (path: string) => executable.has(path),
+    makeExecutable: (path: string) => {
+      executable.add(path)
+      return true
+    },
     packageRoot: PACKAGE_ROOT,
+    homeDir: '/Users/tester',
   }
 }
+
+/** @returns the shipped binary path for darwin-arm64. */
+const shipped = () => join(PACKAGE_ROOT, 'native-window', 'bin', 'darwin-arm64', WINDOW_SHELL_NAME)
 
 describe('resolveWindowShell', () => {
   it('uses the configured program first', () => {
@@ -45,13 +55,24 @@ describe('resolveWindowShell', () => {
     )
   })
 
-  it('falls back to PATH and then to the checkout build', () => {
+  it('prefers the binary shipped in the package', () => {
+    expect(resolveWindowShell(deps({ executable: [shipped()] }))).toBe(shipped())
+  })
+
+  it('repairs a shipped binary that lost its executable bit', () => {
+    expect(resolveWindowShell(deps({ exists: [shipped()] }))).toBe(shipped())
+  })
+
+  it('falls back to the user install directories and then PATH', () => {
+    const cargoBin = join('/Users/tester', '.cargo', 'bin', WINDOW_SHELL_NAME)
+    expect(resolveWindowShell(deps({ executable: [cargoBin] }))).toBe(cargoBin)
+
+    const localBin = join('/Users/tester', '.local', 'bin', WINDOW_SHELL_NAME)
+    expect(resolveWindowShell(deps({ executable: [localBin] }))).toBe(localBin)
+
     const binDirectory = '/usr/local/bin'
     const onPath = join(binDirectory, WINDOW_SHELL_NAME)
     expect(resolveWindowShell(deps({ path: binDirectory, executable: [onPath] }))).toBe(onPath)
-
-    const built = join(PACKAGE_ROOT, 'native-window', 'target', 'release', WINDOW_SHELL_NAME)
-    expect(resolveWindowShell(deps({ executable: [built] }))).toBe(built)
     expect(resolveWindowShell(deps({}))).toBeNull()
   })
 
@@ -59,8 +80,8 @@ describe('resolveWindowShell', () => {
     const built = join(
       PACKAGE_ROOT,
       'native-window',
-      'target',
-      'release',
+      'bin',
+      'win32-arm64',
       `${WINDOW_SHELL_NAME}.exe`,
     )
     expect(resolveWindowShell(deps({ platform: 'win32', executable: [built] }))).toBe(built)

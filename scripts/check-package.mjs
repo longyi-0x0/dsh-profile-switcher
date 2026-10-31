@@ -53,6 +53,11 @@ check(await fileExists('CHANGELOG.md'), 'files: CHANGELOG.md is missing')
 check(await fileExists('README.md'), 'files: README.md is missing')
 check(await fileExists('README.zh.md'), 'files: README.zh.md is missing')
 
+check(
+  Array.isArray(pkg.files) && pkg.files.includes('native-window/bin'),
+  'files: native-window/bin must ship with the package',
+)
+
 // --- DSH declarations --------------------------------------------------------
 check(
   pkg.dsh?.bundle?.patch === './cordis.patch.yml',

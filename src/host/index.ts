@@ -16,6 +16,7 @@
 import { spawn } from 'node:child_process'
 import {
   accessSync,
+  chmodSync,
   constants,
   existsSync,
   mkdirSync,
@@ -225,8 +226,23 @@ export function apply(ctx: HostContext, rawConfig?: unknown): void {
     platform: process.platform,
     exists: (path) => existsSync(path),
     isExecutable,
+    makeExecutable: (path) => {
+      try {
+        chmodSync(path, 0o755)
+        return true
+      } catch {
+        return false
+      }
+    },
     packageRoot,
+    homeDir,
+    arch: process.arch,
   })
+  if (windowShell === null) {
+    logger.info(
+      'no native window host found; "open in new window" stays unavailable (cargo install --path native-window)',
+    )
+  }
 
   const routesRegistered = registerRoutes(ctx, {
     supervisor,

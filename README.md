@@ -33,13 +33,13 @@ full-screen leased webview with one-click return to the default profile.
 
 ## Requirements
 
-| Requirement              | Notes                                                                                                                        |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| DeepSeek Harness 0.2.x   | Tested with Desktop/runtime `0.2.1-rc.5`. Requires the authenticated `ctx.connection.fetch` route registry.                  |
-| Desktop app              | Full-screen embedding uses the Desktop browser-lease bridge. `dsh web` degrades to the system browser.                       |
-| Node.js ≥ 20             | Only needed when the plugin launches a `dsh` executable discovered on `PATH`.                                                |
-| Native window (optional) | `cargo install --path native-window`, or `config.windowShell`. Uses the platform WebView (WKWebView / WebView2 / WebKitGTK). |
-| Target profile           | Must include `@deepseek-ai/dsh-web-app`; third-party bundles with peer dependencies must be installed in that profile.       |
+| Requirement            | Notes                                                                                                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| DeepSeek Harness 0.2.x | Tested with Desktop/runtime `0.2.1-rc.5`. Requires the authenticated `ctx.connection.fetch` route registry.                                                              |
+| Desktop app            | Full-screen embedding uses the Desktop browser-lease bridge. `dsh web` degrades to the system browser.                                                                   |
+| Node.js ≥ 20           | Only needed when the plugin launches a `dsh` executable discovered on `PATH`.                                                                                            |
+| Native window          | Ships with the package for the publishing platform; other platforms: `pnpm build:native` or `cargo install --path native-window`. Uses WKWebView / WebView2 / WebKitGTK. |
+| Target profile         | Must include `@deepseek-ai/dsh-web-app`; third-party bundles with peer dependencies must be installed in that profile.                                                   |
 
 ## Install
 
@@ -91,10 +91,12 @@ dsh plugin --profile desktop add dsh-profile-switcher
   `desktop` profile offer no delete action.
 
 **Open in new window** opens the target in a native application window: `native-window/` is a
-small tao + wry program (`dsh-profile-window`) that hosts one WebView, not a browser tab. It
-is optional — build it once with `cargo install --path native-window` (that puts
-`dsh-profile-window` on `PATH`) or point `config.windowShell` at it; without a host the button
-is hidden. If the host cannot start, the target opens in the browser and the top bar says so.
+small tao + wry program (`dsh-profile-window`) that hosts one WebView, not a browser tab. The
+built host for the current platform ships inside the package (`native-window/bin/`), so a
+plugin update brings it along; other platforms can build it with `pnpm build:native`, install
+it with `cargo install --path native-window`, or point `config.windowShell` at it. Without a
+host the button is hidden. If the host cannot start, the target opens in the browser and the
+top bar says so.
 
 **Open in browser** is the ordinary handoff: Desktop routes `window.open` through
 `shell.openExternal`, so whether that becomes a tab or a window is the browser's choice.
@@ -116,18 +118,18 @@ Add `config` to the plugin row in your profile patch:
         maxRunning: 3
 ```
 
-| Field                  | Default  | Meaning                                                                                                 |
-| ---------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
-| `additionalHomes`      | `[]`     | Extra DSH homes to list, in addition to the current home and `~/.dsh-*` siblings.                       |
-| `discoverSiblingHomes` | `true`   | Scan `~/.dsh-*` and `~/.dsh_*` sibling homes.                                                           |
-| `launcher`             | `auto`   | `auto`, `desktop-cli`, or `path`. `auto` prefers the CLI shipped with Desktop and then `dsh` on `PATH`. |
-| `dshPath`              | unset    | Explicit CLI path; disables discovery.                                                                  |
-| `windowShell`          | unset    | Path to `dsh-profile-window`; unset discovers `PATH` and the checkout build.                            |
-| `startTimeoutMs`       | `120000` | How long a target may take to print its URL (5s–600s).                                                  |
-| `idleStopMs`           | `900000` | Stop a target after this long without a client heartbeat (60s–24h); `0` disables idle recovery.         |
-| `maxRunning`           | `3`      | Maximum concurrent target servers (1–10).                                                               |
-| `killGraceMs`          | `5000`   | Grace period between SIGTERM and SIGKILL (100ms–60s).                                                   |
-| `logLevel`             | `warn`   | `debug`, `info`, `warn`, or `error`.                                                                    |
+| Field                  | Default  | Meaning                                                                                                   |
+| ---------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| `additionalHomes`      | `[]`     | Extra DSH homes to list, in addition to the current home and `~/.dsh-*` siblings.                         |
+| `discoverSiblingHomes` | `true`   | Scan `~/.dsh-*` and `~/.dsh_*` sibling homes.                                                             |
+| `launcher`             | `auto`   | `auto`, `desktop-cli`, or `path`. `auto` prefers the CLI shipped with Desktop and then `dsh` on `PATH`.   |
+| `dshPath`              | unset    | Explicit CLI path; disables discovery.                                                                    |
+| `windowShell`          | unset    | Path to `dsh-profile-window`; unset uses the shipped binary, then `~/.cargo/bin`, `~/.local/bin`, `PATH`. |
+| `startTimeoutMs`       | `120000` | How long a target may take to print its URL (5s–600s).                                                    |
+| `idleStopMs`           | `900000` | Stop a target after this long without a client heartbeat (60s–24h); `0` disables idle recovery.           |
+| `maxRunning`           | `3`      | Maximum concurrent target servers (1–10).                                                                 |
+| `killGraceMs`          | `5000`   | Grace period between SIGTERM and SIGKILL (100ms–60s).                                                     |
+| `logLevel`             | `warn`   | `debug`, `info`, `warn`, or `error`.                                                                      |
 
 Invalid values are reported in the plugin log and replaced with defaults; a typo never
 prevents the sidebar from loading.
@@ -171,14 +173,15 @@ See [docs/security-model.md](docs/security-model.md) for the threat model.
 
 ## Troubleshooting
 
-| Symptom                                            | Fix                                                                                                                                                   |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Menu says no launcher was found                    | Set `config.dshPath` to the CLI, or install `dsh` on `PATH`. Desktop auto-detects its bundled CLI.                                                    |
-| `Session expired` / 401 in the console             | Reload the Harness page; the browser session cookie is required.                                                                                      |
-| `This Harness version does not support the plugin` | Upgrade DSH to a 0.2.x build with `ctx.connection.fetch`.                                                                                             |
-| Target starts then the error card says it exited   | Open the target profile directly (`dsh --profile <name>`) to see its startup error; often a missing `dsh-web-app` bundle or a plugin peer dependency. |
-| Server disappeared after leaving the window open   | `idleStopMs` elapsed without a heartbeat. Reopen the profile; increase or disable idle recovery in the config.                                        |
-| Embedded page shows a login or connection error    | The target profile's own server rejected the session; check its logs.                                                                                 |
+| Symptom                                            | Fix                                                                                                                                                                 |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Menu says no launcher was found                    | Set `config.dshPath` to the CLI, or install `dsh` on `PATH`. Desktop auto-detects its bundled CLI.                                                                  |
+| **Open in new window** is greyed out               | The native window host is not installed. Run `cargo install --path native-window` (or copy a built `dsh-profile-window` into `~/.cargo/bin`), then restart the app. |
+| `Session expired` / 401 in the console             | Reload the Harness page; the browser session cookie is required.                                                                                                    |
+| `This Harness version does not support the plugin` | Upgrade DSH to a 0.2.x build with `ctx.connection.fetch`.                                                                                                           |
+| Target starts then the error card says it exited   | Open the target profile directly (`dsh --profile <name>`) to see its startup error; often a missing `dsh-web-app` bundle or a plugin peer dependency.               |
+| Server disappeared after leaving the window open   | `idleStopMs` elapsed without a heartbeat. Reopen the profile; increase or disable idle recovery in the config.                                                      |
+| Embedded page shows a login or connection error    | The target profile's own server rejected the session; check its logs.                                                                                               |
 
 Use `logLevel: debug` for lifecycle diagnostics. Launch URLs are redacted from logs.
 
@@ -193,6 +196,7 @@ pnpm dev            # rebuild lib/ on change
 | Script                            | Purpose                                                                                            |
 | --------------------------------- | -------------------------------------------------------------------------------------------------- |
 | `pnpm build`                      | Bundle `src/host` → `lib/index.js` and `src/client` → `lib/client.js`.                             |
+| `pnpm build:native`               | Build `native-window/` and copy it to `native-window/bin/<platform>-<arch>/`.                      |
 | `pnpm typecheck`                  | Type-check the Host and Client projects separately (Node vs DOM libs).                             |
 | `pnpm lint` / `pnpm format:check` | ESLint (including hooks and jsx-a11y) and Prettier.                                                |
 | `pnpm test`                       | Vitest: Host unit tests and Client jsdom tests.                                                    |

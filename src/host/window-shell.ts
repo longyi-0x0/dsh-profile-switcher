@@ -5,9 +5,13 @@
  * opens one real application window around a URL. The plugin never ships or builds a
  * binary; it only starts an installed one, so the feature stays optional.
  *
- * Resolution order: `config.windowShell`, the program on `PATH`, then the checkout's
- * `native-window/target/release/`. The URL travels on **stdin**: `ps` shows every local
- * process's argv, and the URL carries the target's bearer token.
+ * Resolution order: `config.windowShell`, the binary shipped in the package
+ * (`native-window/bin/<platform>-<arch>/`), `~/.cargo/bin`, `~/.local/bin`, then `PATH`. The
+ * shipped binary is what makes a plugin update bring the program along; the user install
+ * directories come before `PATH` because a GUI app inherits launchd's PATH, which has
+ * neither. The URL travels on **stdin**: `ps` shows every local process's argv, and the URL
+ * carries the target's bearer token. A shipped binary that lost its executable bit is fixed
+ * up once via `makeExecutable`.
  */
 import { join } from 'node:path'
 
@@ -22,8 +26,14 @@ export interface WindowShellDeps {
   platform: NodeJS.Platform
   exists(path: string): boolean
   isExecutable(path: string): boolean
+  /** Best effort: make a shipped file executable; returns whether it now is. */
+  makeExecutable(path: string): boolean
   /** Root of the installed plugin package. */
   packageRoot: string
+  /** User home; conventional install directories hang off it. */
+  homeDir: string
+  /** CPU architecture, as in `process.arch`. */
+  arch: NodeJS.Architecture
 }
 
 /** A child process as far as starting the window host is concerned. */
@@ -89,11 +99,22 @@ export function resolveWindowShell(deps: WindowShellDeps): string | null {
       ? deps.configured
       : null
   }
-  const onPath = findOnPath(WINDOW_SHELL_NAME, deps)
-  if (onPath !== null) return onPath
   const executable = deps.platform === 'win32' ? `${WINDOW_SHELL_NAME}.exe` : WINDOW_SHELL_NAME
-  const built = join(deps.packageRoot, 'native-window', 'target', 'release', executable)
-  return deps.isExecutable(built) ? built : null
+  const bundled = join(
+    deps.packageRoot,
+    'native-window',
+    'bin',
+    `${deps.platform}-${deps.arch}`,
+    executable,
+  )
+  if (deps.isExecutable(bundled)) return bundled
+  if (deps.exists(bundled) && deps.makeExecutable(bundled)) return bundled
+
+  for (const directory of ['.cargo', '.local']) {
+    const installed = join(deps.homeDir, directory, 'bin', executable)
+    if (deps.isExecutable(installed)) return installed
+  }
+  return findOnPath(WINDOW_SHELL_NAME, deps)
 }
 
 /**

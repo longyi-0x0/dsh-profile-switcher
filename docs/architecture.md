@@ -123,8 +123,10 @@ Deletion is irreversible and owns the plugin packages installed into that profil
 window API to plugins, so this package carries its own host: `native-window/` is a separate
 tao + wry program (`dsh-profile-window`) that shows one window around one WebView.
 
-- The plugin does not ship or build a binary. It resolves the host from `config.windowShell`,
-  then `PATH`, then the checkout's `native-window/target/release/`; without one the Client
+- The built host for the publishing platform ships in the package
+  (`native-window/bin/<platform>-<arch>/`), so an update brings it along. Resolution:
+  `config.windowShell`, the shipped binary, `~/.cargo/bin`, `~/.local/bin`, then `PATH`; a
+  shipped binary that lost its executable bit is repaired once. Without a host the Client
   hides the action.
 - The launch URL is written to the host's **stdin**; argv carries only `--title <profile>`,
   because `ps` exposes every process's command line.
