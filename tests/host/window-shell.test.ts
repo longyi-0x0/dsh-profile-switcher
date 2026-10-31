@@ -46,8 +46,9 @@ describe('resolveWindowShell', () => {
   })
 
   it('falls back to PATH and then to the checkout build', () => {
-    const onPath = '/usr/local/bin/dsh-profile-window'
-    expect(resolveWindowShell(deps({ path: '/usr/local/bin', executable: [onPath] }))).toBe(onPath)
+    const binDirectory = '/usr/local/bin'
+    const onPath = join(binDirectory, WINDOW_SHELL_NAME)
+    expect(resolveWindowShell(deps({ path: binDirectory, executable: [onPath] }))).toBe(onPath)
 
     const built = join(PACKAGE_ROOT, 'native-window', 'target', 'release', WINDOW_SHELL_NAME)
     expect(resolveWindowShell(deps({ executable: [built] }))).toBe(built)
