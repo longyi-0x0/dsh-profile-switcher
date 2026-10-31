@@ -114,7 +114,6 @@ describe('host apply', () => {
         '/api/profile-switcher/stop',
         '/api/profile-switcher/create',
         '/api/profile-switcher/delete',
-        '/api/profile-switcher/window',
       ].sort(),
     )
 
@@ -204,6 +203,6 @@ describe('host apply', () => {
     const test = await harness()
     apply(test.ctx, { discoverSiblingHomes: false, maxRunning: 99, nope: true })
     expect(test.logger.warn).toHaveBeenCalled()
-    expect(test.routes.size).toBe(7)
+    expect(test.routes.size).toBe(6)
   })
 })

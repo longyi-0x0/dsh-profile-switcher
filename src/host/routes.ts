@@ -8,7 +8,6 @@ import {
   type ListResponse,
   type ProfileTargetRequest,
   type StatusResponse,
-  type WindowResponse,
 } from '../shared/protocol'
 import type { HostContext, HostLogger } from './context'
 import { ApiError, isApiError } from './errors'
@@ -28,10 +27,6 @@ export interface RouteDeps {
   files: ProfileFiles
   /** Filesystem seams for creating and deleting profile directories. */
   admin: ProfileAdminDeps
-  /** Ask the system browser for a new window showing a ready target's URL. */
-  openWindow: (url: string) => Promise<WindowResponse>
-  /** Whether the Host supports the new-window handoff at all. */
-  canOpenWindow: boolean
   currentHome: string
   currentProfile: string | null
   homes: readonly string[]
@@ -207,7 +202,6 @@ export function registerRoutes(ctx: HostContext, deps: RouteDeps): boolean {
         deps.currentProfile === null ? null : { home: deps.currentHome, name: deps.currentProfile },
       homes: deps.supervisor.summaries(),
       canLaunch: deps.supervisor.canLaunch,
-      canOpenWindow: deps.canOpenWindow,
       launcher: deps.supervisor.launcherSummary,
       limits: deps.supervisor.limits,
       diagnostics: deps.supervisor.diagnostics,
@@ -237,17 +231,6 @@ export function registerRoutes(ctx: HostContext, deps: RouteDeps): boolean {
     const name = requireName(stringField(body, 'name'))
     const stopped = await deps.supervisor.stop(home, name)
     return json(stopped)
-  })
-
-  register('window', ['POST'], 'streaming', async (request) => {
-    const target = await readTarget(request)
-    const status = deps.supervisor.status(target.home, target.name)
-    if (status.state !== 'ready' || status.url === undefined) {
-      throw new ApiError('profile-not-ready', 409)
-    }
-    // The URL stays inside the Host: the response carries no token.
-    const result = await deps.openWindow(status.url)
-    return json(result satisfies WindowResponse)
   })
 
   register('create', ['POST'], 'streaming', async (request) => {

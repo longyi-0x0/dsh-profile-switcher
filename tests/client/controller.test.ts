@@ -24,7 +24,6 @@ function listing(overrides: Partial<ListResponse> = {}): ListResponse {
       },
     ],
     canLaunch: true,
-    canOpenWindow: true,
     launcher: { kind: 'desktop-cli' },
     limits: {
       startTimeoutMs: 500,
@@ -47,7 +46,6 @@ function createHarness(
     list?: () => Promise<ListResponse>
     create?: (home: string, name: string) => Promise<{ created: true }>
     remove?: (home: string, name: string) => Promise<{ deleted: true }>
-    openWindow?: (home: string, name: string) => Promise<{ opened: boolean }>
   } = {},
 ) {
   const api: ProfileApi = {
@@ -59,7 +57,6 @@ function createHarness(
     stop: vi.fn(async () => ({ state: 'idle' as const, stopped: true })),
     create: vi.fn(options.create ?? (async () => ({ created: true as const }))),
     remove: vi.fn(options.remove ?? (async () => ({ deleted: true as const }))),
-    openWindow: vi.fn(options.openWindow ?? (async () => ({ opened: true as const }))),
   }
   const store = createStore({
     ...INITIAL_STATE,
@@ -369,42 +366,6 @@ describe('ProfileController', () => {
     controller.openCreate()
     controller.closeCreate()
     expect(store.getSnapshot().createOpen).toBe(false)
-  })
-
-  it('opens a real browser window through the Host', async () => {
-    const { controller, store, api, openExternal } = createHarness({
-      open: async () => ({ state: 'ready', url: URL }),
-    })
-    await controller.beginSelect(HOME, 'web')
-    await controller.openInWindow()
-    expect(api.openWindow).toHaveBeenCalledWith(HOME, 'web')
-    expect(openExternal).not.toHaveBeenCalled()
-    expect(store.getSnapshot().notice).toBeNull()
-  })
-
-  it('falls back to the browser and announces it when no window opens', async () => {
-    const { controller, store, openExternal } = createHarness({
-      open: async () => ({ state: 'ready', url: URL }),
-      openWindow: async () => ({ opened: false }),
-    })
-    await controller.beginSelect(HOME, 'web')
-    await controller.openInWindow()
-    expect(openExternal).toHaveBeenCalledWith(URL)
-    expect(store.getSnapshot().notice).toBe('window-fallback')
-    expect(store.getSnapshot().phase).toBe('embedded')
-  })
-
-  it('falls back to the browser when the window request fails', async () => {
-    const { controller, store, openExternal } = createHarness({
-      open: async () => ({ state: 'ready', url: URL }),
-      openWindow: async () => {
-        throw new ApiClientError('profile-not-ready', 409)
-      },
-    })
-    await controller.beginSelect(HOME, 'web')
-    await controller.openInWindow()
-    expect(openExternal).toHaveBeenCalledWith(URL)
-    expect(store.getSnapshot().notice).toBe('window-fallback')
   })
 
   it('deletes a profile and refreshes the listing', async () => {

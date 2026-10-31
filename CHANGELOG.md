@@ -14,13 +14,9 @@ All notable changes to this project are documented here. The format follows
 - Profile deletion from the sidebar menu: a two-step confirmation stops the profile's server
   and removes its directory. The running profile and the app-managed `desktop` profile are
   refused, and `/list` publishes `deletable` per row.
-- `POST /api/profile-switcher/create`, `POST /api/profile-switcher/delete`, and
-  `POST /api/profile-switcher/window` on the authenticated carrier, with `profile-exists`,
-  `profile-reserved`, `profile-create-failed`, `profile-delete-failed`, and
-  `profile-not-ready` error codes.
-- **Open in new window**: the Host asks the default browser for a real macOS window through
-  Safari/Chromium AppleScript (URL on stdin, 10 s timeout). An unsupported browser or a
-  denied Automation permission falls back to the browser tab with a notice.
+- `POST /api/profile-switcher/create` and `POST /api/profile-switcher/delete` on the
+  authenticated carrier, with `profile-exists`, `profile-reserved`, `profile-create-failed`,
+  and `profile-delete-failed` error codes.
 - The sidebar brand row is now the wordmark on the left and a profile dropdown pill on the
   right.
 - Creating a profile uses a centered modal dialog with validation, focus trapping, and

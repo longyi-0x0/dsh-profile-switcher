@@ -35,7 +35,6 @@ npm pack --dry-run
 | Startup         | The brand trigger reads the active profile from the first `/list` before the menu opens                            | `tests/client/apply.test.tsx`        |
 | i18n            | Key and placeholder parity, fallback, every error code                                                             | `tests/client/i18n.test.ts`          |
 | Artifact        | Loader id, module requests, four registrations, Host exports                                                       | `scripts/smoke-client.mjs`           |
-| New window      | macOS-only, Safari/Chromium scripts, URL escaping, unsupported browser, failed script, thrown runner               | `tests/host/browser-window.test.ts`  |
 | Package         | Manifest, exports, files, patch row, locale metadata, icon, wrapper id                                             | `scripts/check-package.mjs`          |
 
 ## Isolated Host smoke (no user state)
@@ -89,10 +88,6 @@ rows on Windows when available. Use two profiles, one of them in a sibling home.
 - [ ] Near the bottom of the window the menu flips above the trigger and stays on screen.
 - [ ] Selecting a profile shows the starting card immediately, then the target UI.
 - [ ] Keyboard input, scrolling, charts, and links work inside the guest.
-- [ ] **Open in new window** asks the default browser for a real window. The first use shows
-      the macOS Automation prompt; approve it and a new window opens on the target.
-- [ ] Deny the prompt (or use a browser without window scripting): the target opens in a
-      browser tab and the top bar says the window could not be opened.
 - [ ] **Open in browser** always hands the target to the system browser and keeps the guest
       usable; Desktop routes `window.open` through `shell.openExternal`.
 - [ ] **Back to default** destroys the guest, releases the lease, restores focus, and the host

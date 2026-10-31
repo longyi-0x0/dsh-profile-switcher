@@ -10,8 +10,7 @@
  * - `launcher` resolves the dsh executable to spawn;
  * - `supervisor` owns every child process and its lifecycle;
  * - `profile-admin` creates and deletes profile directories;
- * - `browser-window` asks the system browser for a real new window (macOS);
- * - `routes` exposes the seven operations below the authenticated `/api` carrier.
+ * - `routes` exposes the six operations below the authenticated `/api` carrier.
  */
 import { spawn } from 'node:child_process'
 import {
@@ -28,13 +27,11 @@ import {
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { normalizeConfig } from '../shared/config'
-import { openInNewWindow } from './browser-window'
 import type { HostContext } from './context'
 import { detectCurrentProfile } from './current-profile'
 import { discoverHomes, homeLabel } from './homes'
 import { resolveLauncher } from './launcher'
 import { createScopedLogger } from './logger'
-import { createOsascriptRunner } from './osascript'
 import { createProcessOperations, type SpawnLike } from './process'
 import type { ProfileAdminDeps } from './profile-admin'
 import { listProfileDirectories } from './profiles'
@@ -195,17 +192,10 @@ export function apply(ctx: HostContext, rawConfig?: unknown): void {
     'profile-switcher: process exit hook',
   )
 
-  // A real browser window needs the browser's own scripting interface; only macOS
-  // exposes one. Everywhere else the Client keeps the browser-tab handoff.
-  const canOpenWindow = process.platform === 'darwin'
-  const runScript = createOsascriptRunner()
-
   const routesRegistered = registerRoutes(ctx, {
     supervisor,
     files,
     admin: createProfileAdmin(),
-    openWindow: (url) => openInNewWindow(url, { platform: process.platform, run: runScript }),
-    canOpenWindow,
     currentHome,
     currentProfile,
     homes,

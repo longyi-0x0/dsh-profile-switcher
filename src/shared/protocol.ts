@@ -39,7 +39,6 @@ export type ApiErrorCode =
   | 'profile-reserved'
   | 'profile-create-failed'
   | 'profile-delete-failed'
-  | 'profile-not-ready'
   | 'too-many-profiles'
   | 'launcher-unavailable'
   | 'internal-error'
@@ -96,8 +95,6 @@ export interface ListResponse {
   current: { home: string; name: string } | null
   homes: HomeSummary[]
   canLaunch: boolean
-  /** Whether the Host can ask the system browser for a new window. */
-  canOpenWindow: boolean
   launcher: LauncherSummary | null
   limits: Limits
   diagnostics: Diagnostic[]
@@ -126,19 +123,6 @@ export interface CreateProfileResponse {
 /** `POST /api/profile-switcher/delete` */
 export interface DeleteProfileResponse {
   deleted: true
-}
-
-/**
- * `POST /api/profile-switcher/window`.
- *
- * A browser that cannot be scripted is an expected answer, not a request failure, so the
- * Client can fall back to a normal browser handoff.
- */
-export interface WindowResponse {
-  opened: boolean
-  reason?: 'unsupported' | 'failed'
-  /** Sanitized script failure; never contains the launch URL. */
-  detail?: string
 }
 
 /** Any non-2xx response body. */

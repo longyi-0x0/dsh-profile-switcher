@@ -89,12 +89,10 @@ dsh plugin --profile desktop add dsh-profile-switcher
   together with the packages installed into it. The running profile and the app-managed
   `desktop` profile offer no delete action.
 
-**Open in new window** asks the default browser for a real window through its own macOS
-scripting interface (Safari or a Chromium-family browser). The first use asks for permission
-to control that browser; if it cannot be scripted, the target opens in a browser tab instead
-and the top bar says so. **Open in browser** always uses the ordinary handoff, where Desktop
-routes `window.open` through `shell.openExternal` and the browser decides between a tab and a
-window.
+**Open in browser** hands the target to the default browser. Desktop routes `window.open`
+through `shell.openExternal`, so whether that becomes a tab or a window is the browser's
+choice, not the plugin's. A second native application window would need a Desktop window API
+that a Host plugin does not have; see ADR 0006.
 
 If the menu reports _No dsh launcher was found_, set `config.dshPath` or install `dsh` on
 `PATH` (see Configuration). Unauthenticated or cross-site requests to the plugin routes

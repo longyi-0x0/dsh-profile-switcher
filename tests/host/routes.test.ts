@@ -1,12 +1,7 @@
 import { EventEmitter } from 'node:events'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import {
-  API_PREFIX,
-  type ListResponse,
-  type StatusResponse,
-  type WindowResponse,
-} from '../../src/shared/protocol'
+import { API_PREFIX, type ListResponse, type StatusResponse } from '../../src/shared/protocol'
 import { DEFAULT_CONFIG, type ProfileSwitcherConfig } from '../../src/shared/config'
 import type { FetchRoute, HostContext, HostLogger } from '../../src/host/context'
 import type { ProfileAdminDeps } from '../../src/host/profile-admin'
@@ -145,13 +140,10 @@ function harness(options: HarnessOptions = {}) {
   if (options.withRegistry === false) {
     ctx.connection = undefined as unknown as HostContext['connection']
   }
-  const openWindow = vi.fn(async (): Promise<WindowResponse> => ({ opened: true }))
   const registered = registerRoutes(ctx, {
     supervisor,
     files,
     admin: admin.admin,
-    openWindow,
-    canOpenWindow: true,
     currentHome: HOME,
     currentProfile,
     homes: [HOME],
@@ -182,7 +174,6 @@ function harness(options: HarnessOptions = {}) {
     children,
     profiles,
     admin,
-    openWindow,
   }
 }
 
@@ -199,7 +190,7 @@ afterEach(() => {
 })
 
 describe('profile routes', () => {
-  it('registers all seven authenticated routes', () => {
+  it('registers all six authenticated routes', () => {
     const routes = harness().routes
     expect([...routes.keys()].sort()).toEqual(
       [
@@ -209,14 +200,12 @@ describe('profile routes', () => {
         `${API_PREFIX}/stop`,
         `${API_PREFIX}/create`,
         `${API_PREFIX}/delete`,
-        `${API_PREFIX}/window`,
       ].sort(),
     )
     expect(routes.get(`${API_PREFIX}/open`)?.methods).toEqual(['POST'])
     expect(routes.get(`${API_PREFIX}/open`)?.requestBody).toBe('streaming')
     expect(routes.get(`${API_PREFIX}/create`)?.requestBody).toBe('streaming')
     expect(routes.get(`${API_PREFIX}/delete`)?.requestBody).toBe('streaming')
-    expect(routes.get(`${API_PREFIX}/window`)?.requestBody).toBe('streaming')
   })
 
   it('reports the listing without any launch URL', async () => {
@@ -232,7 +221,6 @@ describe('profile routes', () => {
     expect(listing.apiVersion).toBe(1)
     expect(listing.current).toEqual({ home: HOME, name: 'desktop' })
     expect(listing.canLaunch).toBe(true)
-    expect(listing.canOpenWindow).toBe(true)
     expect(listing.launcher).toEqual({ kind: 'desktop-cli' })
     expect(listing.homes).toHaveLength(1)
     expect(JSON.stringify(body)).not.toContain('token=')
@@ -383,40 +371,6 @@ describe('profile routes', () => {
     const missing = await running.jsonCall('/delete', post({ home: HOME, name: 'missing' }))
     expect(missing.status).toBe(404)
     expect(missing.body).toEqual({ error: 'profile-not-found' })
-  })
-
-  it('asks the browser for a new window showing a ready target', async () => {
-    const { supervisor, jsonCall, children, openWindow } = harness()
-    await supervisor.open(HOME, 'web')
-    const child = children[0]
-    if (child === undefined) throw new Error('no child')
-    child.stdout.emit('data', 'dsh web: http://127.0.0.1:4321/?token=secret\n')
-
-    const result = await jsonCall('/window', post({ home: HOME, name: 'web' }))
-    expect(result.status).toBe(200)
-    expect(result.body).toEqual({ opened: true })
-    expect(openWindow).toHaveBeenCalledWith('http://127.0.0.1:4321/?token=secret')
-    expect(JSON.stringify(result.body)).not.toContain('token=')
-  })
-
-  it('refuses a new window before the target is ready', async () => {
-    const { jsonCall, openWindow } = harness()
-    const result = await jsonCall('/window', post({ home: HOME, name: 'web' }))
-    expect(result.status).toBe(409)
-    expect(result.body).toEqual({ error: 'profile-not-ready' })
-    expect(openWindow).not.toHaveBeenCalled()
-  })
-
-  it('reports a browser that cannot be scripted for a window', async () => {
-    const { supervisor, jsonCall, children, openWindow } = harness()
-    openWindow.mockResolvedValue({ opened: false, reason: 'unsupported' })
-    await supervisor.open(HOME, 'web')
-    const child = children[0]
-    if (child === undefined) throw new Error('no child')
-    child.stdout.emit('data', 'dsh web: http://127.0.0.1:4321/?token=secret\n')
-    const result = await jsonCall('/window', post({ home: HOME, name: 'web' }))
-    expect(result.status).toBe(200)
-    expect(result.body).toEqual({ opened: false, reason: 'unsupported' })
   })
 
   it('stops a running server before deleting its profile', async () => {

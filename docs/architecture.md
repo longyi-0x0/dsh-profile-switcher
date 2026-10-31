@@ -47,9 +47,7 @@ Client controller: open → poll status → lease webview → loadURL(token URL)
 | `web-url.ts`         | Incremental line scanner for `dsh web: <url>`; validates HTTP(S), no credentials, handles ANSI and chunk splits.                             |
 | `process.ts`         | Process-group termination and bounded `waitForExit`.                                                                                         |
 | `supervisor.ts`      | One record per target: state machine, start timeout, max running, heartbeats, idle sweep, exit handling, summaries, diagnostics.             |
-| `routes.ts`          | Seven exact Fetch routes, JSON helpers, 16 KiB streamed body reader, error-to-status mapping.                                                |
-| `browser-window.ts`  | macOS: asks the default browser for a real new window through AppleScript; fixed scripts, URL on stdin.                                      |
-| `osascript.ts`       | Spawns `/usr/bin/osascript` with the script on stdin and a hard timeout.                                                                     |
+| `routes.ts`          | Six exact Fetch routes, JSON helpers, 16 KiB streamed body reader, error-to-status mapping.                                                  |
 | `redact.ts`          | ANSI stripping, token/URL redaction, bounded details.                                                                                        |
 | `errors.ts`          | `ApiError` carrying a stable code and HTTP status.                                                                                           |
 
@@ -117,20 +115,6 @@ new profile declares resolve from the installation.
 - Creation opens a modal dialog; deletion arms a confirmation on the first row click.
 
 Deletion is irreversible and owns the plugin packages installed into that profile.
-
-## New browser window
-
-`POST /window` asks the default browser for a real window showing a ready target. Electron's
-`shell.openExternal` (what the app's `window.open` turns into) cannot request one, so the
-Host drives the browser's own macOS scripting interface instead:
-
-- `/usr/bin/osascript` runs a fixed Safari or Chromium script with the launch URL on
-  **stdin**; an argv form would expose the token to `ps`.
-- The default browser is resolved with `NSWorkspace`; a browser without window scripting
-  answers `{ opened: false, reason: "unsupported" }`, and the Client falls back to the
-  ordinary browser handoff with a notice.
-- macOS asks for Automation permission the first time. A denial or unsupported browser is a
-  normal answer, not a request failure, so the response is `200 { opened: false }`.
 
 ## Lease lifecycle
 

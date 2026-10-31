@@ -6,7 +6,6 @@ import {
   type ListResponse,
   type StatusResponse,
   type StopResponse,
-  type WindowResponse,
 } from '../shared/protocol'
 import { asClientErrorCode, type ClientErrorCode } from './i18n'
 
@@ -38,7 +37,6 @@ export interface ProfileApi {
   stop(home: string, name: string, signal?: AbortSignal): Promise<StopResponse>
   create(home: string, name: string, signal?: AbortSignal): Promise<CreateProfileResponse>
   remove(home: string, name: string, signal?: AbortSignal): Promise<DeleteProfileResponse>
-  openWindow(home: string, name: string, signal?: AbortSignal): Promise<WindowResponse>
 }
 
 /** @param value - unknown JSON value. @returns whether it is a plain object. */
@@ -183,9 +181,6 @@ export function createApi(fetchImpl?: typeof fetch): ProfileApi {
     },
     async remove(home, name, signal) {
       return (await post('/delete', home, name, signal)) as DeleteProfileResponse
-    },
-    async openWindow(home, name, signal) {
-      return (await post('/window', home, name, signal)) as WindowResponse
     },
   }
 }

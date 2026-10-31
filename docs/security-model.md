@@ -73,10 +73,6 @@ untrusted page / local process
 - Deleting a profile removes the plugin packages installed into it, with no trash and no undo.
   The menu arms a confirmation and the Host refuses the running and app-managed profiles, but
   an owner who calls `/delete` directly gets no further prompt.
-- A new browser window needs the browser's scripting interface. macOS may deny Automation or
-  the browser may not support it; the request then answers `opened: false` and the Client
-  falls back to a browser tab. A local process that could read the Host's memory could read
-  the token there, exactly as it could before this feature.
 - Two windows can own the same target; returning in one stops the server for both.
 - A guest's address bar contains the token URL; the guest is that profile's own UI.
 - A system sleep longer than the idle timeout can stop an on-screen server; the Client

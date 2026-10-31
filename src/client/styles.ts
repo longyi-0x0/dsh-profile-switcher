@@ -42,7 +42,6 @@ export const STYLES = `
 .dps-fieldHint{font-size:10px;line-height:1.45;color:var(--dsw-alias-label-secondary)}
 .dps-input{box-sizing:border-box;width:100%;height:28px;padding:0 9px;border:1px solid var(--dsw-alias-border-l1);border-radius:7px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);font:inherit;font-size:12.5px}
 .dps-input:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}
-.dps-chip{flex:none;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 8px;border-radius:999px;background:var(--dsw-alias-bg-layer-2);font-size:10.5px;color:var(--dsw-alias-label-secondary)}
 .dps-notice{margin:2px 6px;padding:5px 8px;border-radius:8px;background:var(--dsw-alias-bg-layer-2);font-size:10.5px;color:var(--dsw-alias-label-secondary)}
 .dps-muted{padding:6px 8px;font-size:11.5px;color:var(--dsw-alias-label-secondary)}
 .dps-diagnostics{margin:2px 6px 4px;padding:5px 8px;border:1px solid var(--dsw-alias-state-error-primary);border-radius:8px;font-size:10.5px;color:var(--dsw-alias-state-error-primary)}
