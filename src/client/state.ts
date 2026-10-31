@@ -47,6 +47,10 @@ export interface ClientState {
   guestLoading: boolean
   homes: HomeSummary[] | null
   canLaunch: boolean
+  /** Whether the Host can ask the system browser for a new window. */
+  canOpenWindow: boolean
+  /** Whether the create-profile dialog is open. */
+  createOpen: boolean
   menuLoading: boolean
   menuError: MenuError | null
   /** Profile being created or deleted from the menu, if any. */
@@ -56,7 +60,7 @@ export interface ClientState {
   launcherKind: LauncherKind | null
   diagnostics: Diagnostic[]
   limits: Limits
-  notice: 'web-fallback' | null
+  notice: 'web-fallback' | 'window-fallback' | null
 }
 
 /** Conservative defaults used before the first `/list` response arrives. */
@@ -80,6 +84,8 @@ export const INITIAL_STATE: ClientState = {
   guestLoading: false,
   homes: null,
   canLaunch: true,
+  canOpenWindow: false,
+  createOpen: false,
   menuLoading: false,
   menuError: null,
   mutation: null,

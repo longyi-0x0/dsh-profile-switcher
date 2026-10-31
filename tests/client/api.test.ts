@@ -28,6 +28,7 @@ const LIST: ListResponse = {
   current: { home: '/h', name: 'desktop' },
   homes: [],
   canLaunch: true,
+  canOpenWindow: false,
   launcher: { kind: 'dsh' },
   limits: {
     startTimeoutMs: 1,

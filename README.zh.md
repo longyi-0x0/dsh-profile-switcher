@@ -70,13 +70,15 @@ dsh plugin --profile desktop add dsh-profile-switcher
 
 ### 新建与删除配置
 
-- 菜单底部的「新建配置」展开一个内联名称输入框。新配置是当前 home 下的 Web 配置
+- 菜单底部的「新建配置」弹出一个居中的对话框。新配置是当前 home 下的 Web 配置
   （`@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-web-app`），建完即可打开；要给它装
   插件用 `dsh plugin --profile <名> add <包>`。
 - 每一行的删除按钮先进入确认态，再点一次才删除；删除会把该配置里已装的插件一起删掉。
   当前配置与应用托管的 `desktop` 配置不提供删除操作。
-- 「在浏览器打开」把目标交给默认浏览器。桌面壳把 `window.open` 转成
-  `shell.openExternal`，是标签页还是新窗口由浏览器决定，插件无法指定。
+- 「在新窗口打开」通过默认浏览器自己的 macOS 脚本接口（Safari 或 Chromium 系）要一个
+  真窗口。第一次会请求「控制浏览器」的授权；浏览器不支持脚本时改为在浏览器标签页打开，
+  顶栏会给出提示。「在浏览器打开」始终走普通交接：桌面壳把 `window.open` 转成
+  `shell.openExternal`，是标签页还是新窗口由浏览器决定。
 
 如果菜单提示找不到 dsh 启动器，请设置 `config.dshPath` 或把 `dsh` 放进 `PATH`。
 未认证或跨站请求会被平台 `/api` 的 Host/Origin fence 以 401/403 拒绝。

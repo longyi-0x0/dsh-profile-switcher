@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { PROFILE_NAME_PATTERN, type HomeSummary, type ProfileSummary } from '../../shared/protocol'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import type { HomeSummary, ProfileSummary } from '../../shared/protocol'
 import { asClientErrorCode, diagnosticMessage, errorMessage } from '../i18n'
-import { useRuntime, useTranslate } from '../runtime'
 import type { ProfileMutation } from '../state'
+import { useRuntime, useTranslate } from '../runtime'
 import { useStoreValue } from '../store'
 import { computeMenuPosition, type MenuGeometry } from './menu-position'
 import { Spinner } from './Spinner'
@@ -37,15 +37,10 @@ export function ProfileMenu() {
   const diagnostics = useStoreValue(store, (state) => state.diagnostics)
   const notice = useStoreValue(store, (state) => state.notice)
   const panelRef = useRef<HTMLDivElement>(null)
-  const newRef = useRef<HTMLButtonElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
   const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const restoreNewFocus = useRef(false)
   const [geometry, setGeometry] = useState<MenuGeometry>(() =>
     computeMenuPosition(anchor, viewportSize()),
   )
-  const [formOpen, setFormOpen] = useState(false)
-  const [draft, setDraft] = useState('')
   const [confirmKey, setConfirmKey] = useState<string | null>(null)
 
   useEffect(() => {
@@ -80,25 +75,11 @@ export function ProfileMenu() {
     return () => document.removeEventListener('pointerdown', onPointerDown, true)
   }, [menuOpen, controller])
 
-  // A closed menu drops the half-finished form and any armed confirmation.
+  // A closed menu drops any armed confirmation.
   useEffect(() => {
     if (menuOpen) return
-    setFormOpen(false)
-    setDraft('')
     setConfirmKey(null)
   }, [menuOpen])
-
-  // The input owns focus while the form is open; closing it returns to its trigger.
-  useEffect(() => {
-    if (!menuOpen) return
-    if (formOpen) {
-      inputRef.current?.focus()
-      return
-    }
-    if (!restoreNewFocus.current) return
-    restoreNewFocus.current = false
-    newRef.current?.focus()
-  }, [formOpen, menuOpen])
 
   useEffect(() => {
     return () => {
@@ -116,8 +97,6 @@ export function ProfileMenu() {
   // New profiles go into the home this Host serves, falling back to the first listing.
   const targetHome: HomeSummary | null =
     homes === null ? null : (homes.find((home) => home.current) ?? homes[0] ?? null)
-  const nameValid = PROFILE_NAME_PATTERN.test(draft.trim())
-  const createBusy = mutation?.kind === 'create' && mutation.busy
   const actionError = mutation?.error ?? null
 
   const disarm = (): void => {
@@ -141,55 +120,15 @@ export function ProfileMenu() {
     void controller.deleteProfile(home, name)
   }
 
-  const closeForm = (): void => {
-    restoreNewFocus.current = true
-    setFormOpen(false)
-    setDraft('')
-  }
-
-  const onCreate = (event: FormEvent<HTMLFormElement>): void => {
-    event.preventDefault()
-    if (targetHome === null || !nameValid || createBusy) return
-    void controller.createProfile(targetHome.path, draft.trim()).then((created) => {
-      if (!created) return
-      restoreNewFocus.current = true
-      setFormOpen(false)
-      setDraft('')
-    })
-  }
-
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Escape') {
       event.preventDefault()
-      if (formOpen) {
-        closeForm()
-        return
-      }
       controller.closeMenu(true)
       return
     }
     if (event.key === 'Tab') {
-      const panel = panelRef.current
-      if (panel === null || !formOpen) {
-        // Restore focus to the trigger, then let the browser continue from there.
-        controller.closeMenu(true)
-        return
-      }
-      // The create form keeps focus inside the panel: Tab is not a menu exit here.
-      const items = [
-        ...panel.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled)'),
-      ]
-      if (items.length === 0) return
-      event.preventDefault()
-      const index = items.indexOf(document.activeElement as HTMLElement)
-      const next = event.shiftKey
-        ? index <= 0
-          ? items.length - 1
-          : index - 1
-        : index < 0 || index === items.length - 1
-          ? 0
-          : index + 1
-      items[next]?.focus()
+      // Restore focus to the trigger, then let the browser continue from there.
+      controller.closeMenu(true)
       return
     }
     const panel = panelRef.current
@@ -275,43 +214,13 @@ export function ProfileMenu() {
         />
       ))}
 
-      {targetHome === null ? null : formOpen ? (
-        <form className="dps-create" role="none" onSubmit={onCreate}>
-          <div className="dps-createTitle">
-            {message('menu.newTitle', { home: targetHome.label })}
-          </div>
-          <div className="dps-createRow">
-            <input
-              ref={inputRef}
-              className="dps-input"
-              value={draft}
-              aria-label={message('menu.newName')}
-              placeholder={message('menu.newPlaceholder')}
-              spellCheck={false}
-              autoComplete="off"
-              onChange={(event) => setDraft(event.target.value)}
-            />
-            <button
-              type="submit"
-              className="dps-primary dps-mini"
-              disabled={!nameValid || createBusy}
-            >
-              {createBusy ? message('menu.creating') : message('menu.create')}
-            </button>
-            <button type="button" className="dps-ghost dps-mini" onClick={closeForm}>
-              {message('menu.cancel')}
-            </button>
-          </div>
-          <div className="dps-createHint">{message('menu.nameHint')}</div>
-        </form>
-      ) : (
+      {targetHome === null ? null : (
         <button
-          ref={newRef}
           type="button"
           role="menuitem"
           data-dps-row="1"
           className="dps-item dps-new"
-          onClick={() => setFormOpen(true)}
+          onClick={() => controller.openCreate()}
         >
           <span className="dps-itemName">
             <span className="dps-newPlus" aria-hidden="true">
@@ -321,8 +230,6 @@ export function ProfileMenu() {
           </span>
         </button>
       )}
-
-      <div className="dps-menuHint">{message('menu.hint')}</div>
     </div>
   )
 }

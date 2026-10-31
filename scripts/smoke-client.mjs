@@ -120,11 +120,11 @@ assert(dictionaries[0].namespace === 'profile-switcher', 'unexpected locale name
 assert(dictionaries[0].locales.zh && dictionaries[0].locales.en, 'both zh and en are required')
 
 const registered = registrations.filter((entry) => entry.kind === 'register')
-assert(registered.length === 3, `expected 3 slot registrations, got ${registered.length}`)
+assert(registered.length === 4, `expected 4 slot registrations, got ${registered.length}`)
 const names = registered.map((entry) => entry.options.name).sort()
 assert(
   JSON.stringify(names) ===
-    JSON.stringify(['shell.overlay', 'shell.overlay', 'sidebar.brand.name']),
+    JSON.stringify(['shell.overlay', 'shell.overlay', 'shell.overlay', 'sidebar.brand.name']),
   `unexpected slot names: ${names.join(', ')}`,
 )
 for (const entry of registered) {

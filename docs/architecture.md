@@ -47,28 +47,31 @@ Client controller: open → poll status → lease webview → loadURL(token URL)
 | `web-url.ts`         | Incremental line scanner for `dsh web: <url>`; validates HTTP(S), no credentials, handles ANSI and chunk splits.                             |
 | `process.ts`         | Process-group termination and bounded `waitForExit`.                                                                                         |
 | `supervisor.ts`      | One record per target: state machine, start timeout, max running, heartbeats, idle sweep, exit handling, summaries, diagnostics.             |
-| `routes.ts`          | Six exact Fetch routes, JSON helpers, 16 KiB streamed body reader, error-to-status mapping.                                                  |
+| `routes.ts`          | Seven exact Fetch routes, JSON helpers, 16 KiB streamed body reader, error-to-status mapping.                                                |
+| `browser-window.ts`  | macOS: asks the default browser for a real new window through AppleScript; fixed scripts, URL on stdin.                                      |
+| `osascript.ts`       | Spawns `/usr/bin/osascript` with the script on stdin and a hard timeout.                                                                     |
 | `redact.ts`          | ANSI stripping, token/URL redaction, bounded details.                                                                                        |
 | `errors.ts`          | `ApiError` carrying a stable code and HTTP status.                                                                                           |
 
 ## Client modules
 
-| Module                 | Responsibility                                                                                                                      |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `apply.tsx`            | Creates the store/controller, registers locale, styles, controller lifetime, and three slots.                                       |
-| `store.ts`             | Immutable snapshot store with `useStoreValue` (`useSyncExternalStore`).                                                             |
-| `controller.ts`        | Menu and overlay state machine; abortable start/poll; heartbeats; retry/return; web fallback.                                       |
-| `api.ts`               | Typed fetch client: same-origin credentials, no-store, abort support, error-code mapping.                                           |
-| `embed.ts`             | Leased `<webview>` lifecycle: official attributes, `loadURL` after `dom-ready`, timeouts, aborted-load retry, exactly-once release. |
-| `insets.ts`            | Reads the Host top clearance, computes platform insets for the overlay bar.                                                         |
-| `ui/menu-position.ts`  | Anchored placement with flipping and viewport clamping.                                                                             |
-| `ui/BrandTrigger.tsx`  | Brand slot occupant: wordmark + active profile; menu toggle and keyboard entry.                                                     |
-| `ui/ProfileMenu.tsx`   | Grouped rows, diagnostics, states, roving focus, outside-click close, inline create form, two-step delete.                          |
-| `ui/EmbedSurface.tsx`  | Full-screen surface: top bar, guest host, loading/error cards, inset observation.                                                   |
-| `ui/Wordmark.tsx`      | Official wordmark geometry copied from the MIT-licensed Host primitive.                                                             |
-| `ui/ErrorBoundary.tsx` | Keeps a crashing slot entry from blanking the Host slot.                                                                            |
-| `i18n.ts`              | `en`/`zh` dictionaries, typed keys, interpolation, error and diagnostic mapping.                                                    |
-| `styles.ts`            | Theme-token-only CSS, prefixed classes.                                                                                             |
+| Module                       | Responsibility                                                                                                                      |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `apply.tsx`                  | Creates the store/controller, registers locale, styles, controller lifetime, and four slots.                                        |
+| `store.ts`                   | Immutable snapshot store with `useStoreValue` (`useSyncExternalStore`).                                                             |
+| `controller.ts`              | Menu and overlay state machine; abortable start/poll; heartbeats; retry/return; web fallback.                                       |
+| `api.ts`                     | Typed fetch client: same-origin credentials, no-store, abort support, error-code mapping.                                           |
+| `embed.ts`                   | Leased `<webview>` lifecycle: official attributes, `loadURL` after `dom-ready`, timeouts, aborted-load retry, exactly-once release. |
+| `insets.ts`                  | Reads the Host top clearance, computes platform insets for the overlay bar.                                                         |
+| `ui/menu-position.ts`        | Anchored placement with flipping and viewport clamping.                                                                             |
+| `ui/BrandTrigger.tsx`        | Brand slot occupant: wordmark + active profile; menu toggle and keyboard entry.                                                     |
+| `ui/ProfileMenu.tsx`         | Grouped rows, diagnostics, states, roving focus, outside-click close, two-step delete.                                              |
+| `ui/CreateProfileDialog.tsx` | Centered modal with the name field, validation, failure text, focus trap, and Escape/backdrop cancel.                               |
+| `ui/EmbedSurface.tsx`        | Full-screen surface: top bar, guest host, loading/error cards, inset observation.                                                   |
+| `ui/Wordmark.tsx`            | Official wordmark geometry copied from the MIT-licensed Host primitive.                                                             |
+| `ui/ErrorBoundary.tsx`       | Keeps a crashing slot entry from blanking the Host slot.                                                                            |
+| `i18n.ts`                    | `en`/`zh` dictionaries, typed keys, interpolation, error and diagnostic mapping.                                                    |
+| `styles.ts`                  | Theme-token-only CSS, prefixed classes.                                                                                             |
 
 ## Startup sequence
 
@@ -111,9 +114,23 @@ new profile declares resolve from the installation.
 - `POST /delete` stops the profile's server first, then removes the directory tree. The
   running profile and the app-managed `desktop` profile in the served home are refused; the
   listing publishes `deletable` per row so the menu never offers a refused action.
+- Creation opens a modal dialog; deletion arms a confirmation on the first row click.
 
-Deletion is irreversible and owns the plugin packages installed into that profile; the UI
-arms a confirmation on the first click and deletes on the second.
+Deletion is irreversible and owns the plugin packages installed into that profile.
+
+## New browser window
+
+`POST /window` asks the default browser for a real window showing a ready target. Electron's
+`shell.openExternal` (what the app's `window.open` turns into) cannot request one, so the
+Host drives the browser's own macOS scripting interface instead:
+
+- `/usr/bin/osascript` runs a fixed Safari or Chromium script with the launch URL on
+  **stdin**; an argv form would expose the token to `ps`.
+- The default browser is resolved with `NSWorkspace`; a browser without window scripting
+  answers `{ opened: false, reason: "unsupported" }`, and the Client falls back to the
+  ordinary browser handoff with a notice.
+- macOS asks for Automation permission the first time. A denial or unsupported browser is a
+  normal answer, not a request failure, so the response is `200 { opened: false }`.
 
 ## Lease lifecycle
 

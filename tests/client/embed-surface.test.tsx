@@ -51,6 +51,50 @@ describe('EmbedSurface', () => {
     )
   })
 
+  it('offers a new browser window when the Host supports it', async () => {
+    const runtime = createTestRuntime({
+      state: {
+        phase: 'starting',
+        target: TARGET,
+        url: PROFILE_URL,
+        canOpenWindow: true,
+      },
+    })
+    const view = runtime.render(<EmbedSurface />)
+    fireEvent.click(view.getByRole('button', { name: /Open in new window/ }))
+    await waitFor(() =>
+      expect(runtime.api.openWindow).toHaveBeenCalledWith(TARGET.home, TARGET.name),
+    )
+  })
+
+  it('hides the new-window button when the Host cannot open windows', () => {
+    const runtime = createTestRuntime({
+      state: {
+        phase: 'starting',
+        target: TARGET,
+        url: PROFILE_URL,
+        canOpenWindow: false,
+      },
+    })
+    const view = runtime.render(<EmbedSurface />)
+    expect(view.queryByRole('button', { name: /Open in new window/ })).toBeNull()
+    expect(view.getByRole('button', { name: /Open in browser/ })).toBeTruthy()
+  })
+
+  it('announces the browser fallback when a window could not be opened', () => {
+    const runtime = createTestRuntime({
+      state: {
+        phase: 'starting',
+        target: TARGET,
+        url: PROFILE_URL,
+        canOpenWindow: true,
+        notice: 'window-fallback',
+      },
+    })
+    const view = runtime.render(<EmbedSurface />)
+    expect(view.getByText(/Could not open a new window/)).toBeTruthy()
+  })
+
   it('mounts a leased guest and clears the loading overlay on load', async () => {
     const bridge = {
       acquire: vi.fn(async () => ({ lease: 'lease-1', partition: 'persist:1' })),

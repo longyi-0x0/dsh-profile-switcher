@@ -81,17 +81,20 @@ dsh plugin --profile desktop add dsh-profile-switcher
 
 ### Create and delete profiles
 
-- **New profile** at the foot of the menu opens an inline name field. The new profile is a
-  Web profile (`@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-web-app`) in the home this Host
+- **New profile** at the foot of the menu opens a centered dialog. The new profile is a Web
+  profile (`@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-web-app`) in the home this Host
   serves, so it can be opened immediately. Install plugins into it with
   `dsh plugin --profile <name> add <package>`.
 - A row's delete action arms a confirmation; a second click removes the profile directory
   together with the packages installed into it. The running profile and the app-managed
   `desktop` profile offer no delete action.
 
-**Open in browser** hands the target to the default browser. Desktop routes `window.open`
-through `shell.openExternal`, so whether that becomes a tab or a window is the browser's
-choice, not the plugin's.
+**Open in new window** asks the default browser for a real window through its own macOS
+scripting interface (Safari or a Chromium-family browser). The first use asks for permission
+to control that browser; if it cannot be scripted, the target opens in a browser tab instead
+and the top bar says so. **Open in browser** always uses the ordinary handoff, where Desktop
+routes `window.open` through `shell.openExternal` and the browser decides between a tab and a
+window.
 
 If the menu reports _No dsh launcher was found_, set `config.dshPath` or install `dsh` on
 `PATH` (see Configuration). Unauthenticated or cross-site requests to the plugin routes

@@ -1,4 +1,4 @@
-import type { StatusResponse } from '../shared/protocol'
+import type { StatusResponse, WindowResponse } from '../shared/protocol'
 import { ApiClientError, delay, isAbortError, type ProfileApi } from './api'
 import type { ClientErrorCode } from './i18n'
 import { sanitizeDetail } from './redact'
@@ -44,6 +44,7 @@ export class ProfileController {
   private keepalive: ReturnType<typeof setInterval> | null = null
   private disposed = false
   private listSequence = 0
+  private windowOpening = false
 
   /** @param deps - store, API, and playback capabilities. */
   constructor(deps: ControllerDeps) {
@@ -63,12 +64,30 @@ export class ProfileController {
     const mutation = this.state.mutation
     this.deps.store.update({
       menuOpen: true,
+      createOpen: false,
       anchor,
       notice: null,
       // A failure belongs to the menu session that caused it; a busy request does not.
       mutation: mutation === null || mutation.busy ? mutation : null,
     })
     void this.loadProfiles()
+  }
+
+  /** Open the create-profile dialog and close the menu behind it. */
+  openCreate(): void {
+    const mutation = this.state.mutation
+    this.deps.store.update({
+      menuOpen: false,
+      createOpen: true,
+      // A previous creation failure is not the new dialog's error.
+      mutation: mutation === null || mutation.busy ? mutation : null,
+    })
+  }
+
+  /** Close the create-profile dialog without creating anything. */
+  closeCreate(): void {
+    if (!this.state.createOpen) return
+    this.deps.store.update({ createOpen: false })
   }
 
   /**
@@ -94,6 +113,7 @@ export class ProfileController {
       this.deps.store.update({
         homes,
         canLaunch: payload.canLaunch !== false,
+        canOpenWindow: payload.canOpenWindow === true,
         currentName: currentProfile?.name ?? '',
         currentHome: currentHome?.path ?? null,
         launcherKind: payload.launcher?.kind ?? null,
@@ -124,9 +144,15 @@ export class ProfileController {
    * @returns whether the profile was created.
    */
   async createProfile(home: string, name: string): Promise<boolean> {
-    return this.mutate({ kind: 'create', name, busy: true, error: null }, async () => {
-      await this.deps.api.create(home, name)
-    })
+    const created = await this.mutate(
+      { kind: 'create', name, busy: true, error: null },
+      async () => {
+        await this.deps.api.create(home, name)
+      },
+    )
+    // Success belongs to the dialog that asked for it; a failure keeps the form open.
+    if (created) this.deps.store.update({ createOpen: false })
+    return created
   }
 
   /**
@@ -192,6 +218,30 @@ export class ProfileController {
     })
     if (target !== null) void this.apiStop(target.home, target.name)
     this.deps.focusTrigger()
+  }
+
+  /**
+   * Ask the Host for a real new browser window, falling back to the browser handoff.
+   * The fallback is announced so the user knows why the window did not appear.
+   */
+  async openInWindow(): Promise<void> {
+    const target = this.state.target
+    const url = this.state.url
+    if (target === null || url === null || this.windowOpening) return
+    this.windowOpening = true
+    let result: WindowResponse | null = null
+    try {
+      result = await this.deps.api.openWindow(target.home, target.name)
+    } catch {
+      result = null
+    } finally {
+      this.windowOpening = false
+    }
+    if (this.disposed || result?.opened === true) return
+    this.openInBrowser()
+    if (this.deps.store.getSnapshot().phase === 'embedded') {
+      this.deps.store.update({ notice: 'window-fallback' })
+    }
   }
 
   /** Open the current target URL in the system browser. */

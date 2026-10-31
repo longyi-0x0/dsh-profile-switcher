@@ -29,6 +29,7 @@ export function listing(overrides: Partial<ListResponse> = {}): ListResponse {
       },
     ],
     canLaunch: true,
+    canOpenWindow: true,
     launcher: { kind: 'desktop-cli' },
     limits: {
       startTimeoutMs: 1_000,
@@ -58,6 +59,7 @@ export function createTestRuntime(
     stop: vi.fn(async () => ({ state: 'idle' as const, stopped: true })),
     create: vi.fn(async () => ({ created: true as const })),
     remove: vi.fn(async () => ({ deleted: true as const })),
+    openWindow: vi.fn(async () => ({ opened: true as const })),
     ...options.api,
   }
   const store = createStore({ ...INITIAL_STATE, ...options.state })

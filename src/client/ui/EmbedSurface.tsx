@@ -26,6 +26,8 @@ export function EmbedSurface() {
   const errorCode = useStoreValue(store, (state) => state.errorCode)
   const errorDetail = useStoreValue(store, (state) => state.errorDetail)
   const currentName = useStoreValue(store, (state) => state.currentName)
+  const canOpenWindow = useStoreValue(store, (state) => state.canOpenWindow)
+  const notice = useStoreValue(store, (state) => state.notice)
   const hostRef = useRef<HTMLDivElement>(null)
   const backRef = useRef<HTMLButtonElement>(null)
   const retryRef = useRef<HTMLButtonElement>(null)
@@ -138,6 +140,21 @@ export function EmbedSurface() {
           {currentName === '' ? null : <span className="dps-backName">{currentName}</span>}
         </button>
         <span className="dps-topbarSpacer" />
+        {notice === 'window-fallback' ? (
+          <span className="dps-chip" role="status">
+            {message('notice.windowFallback')}
+          </span>
+        ) : null}
+        {url === null ? null : canOpenWindow ? (
+          <button
+            type="button"
+            className={layout.floating ? 'dps-newTab dps-btnFloat' : 'dps-newTab'}
+            onClick={() => void controller.openInWindow()}
+          >
+            {message('embed.newWindow')}
+            <span aria-hidden="true">⧉</span>
+          </button>
+        ) : null}
         {url === null ? null : (
           <button
             type="button"

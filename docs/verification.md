@@ -34,7 +34,8 @@ npm pack --dry-run
 | UI              | Menu grouping/state/focus/keys/outside click, create form, delete confirmation, trigger, error card, guest mount   | `tests/client/*.test.tsx`            |
 | Startup         | The brand trigger reads the active profile from the first `/list` before the menu opens                            | `tests/client/apply.test.tsx`        |
 | i18n            | Key and placeholder parity, fallback, every error code                                                             | `tests/client/i18n.test.ts`          |
-| Artifact        | Loader id, module requests, three registrations, Host exports                                                      | `scripts/smoke-client.mjs`           |
+| Artifact        | Loader id, module requests, four registrations, Host exports                                                       | `scripts/smoke-client.mjs`           |
+| New window      | macOS-only, Safari/Chromium scripts, URL escaping, unsupported browser, failed script, thrown runner               | `tests/host/browser-window.test.ts`  |
 | Package         | Manifest, exports, files, patch row, locale metadata, icon, wrapper id                                             | `scripts/check-package.mjs`          |
 
 ## Isolated Host smoke (no user state)
@@ -79,17 +80,21 @@ rows on Windows when available. Use two profiles, one of them in a sibling home.
 
 ### Core flow
 
-- [ ] Brand row shows the official wordmark plus the active profile; the current profile is
-      disabled with a **Current** badge.
+- [ ] Brand row shows the official wordmark on the left and a profile dropdown pill on the
+      right; the current profile is disabled with a **Current** badge.
+- [ ] The pill truncates a long profile name and keeps the row on one line.
 - [ ] Menu opens below the trigger, groups by home, marks running profiles.
 - [ ] Arrow keys, Home/End, Enter/Space, Escape, and Tab behave; Escape returns focus to the
       trigger; an outside click closes without stealing focus.
 - [ ] Near the bottom of the window the menu flips above the trigger and stays on screen.
 - [ ] Selecting a profile shows the starting card immediately, then the target UI.
 - [ ] Keyboard input, scrolling, charts, and links work inside the guest.
-- [ ] **Open in browser** hands the target to the system browser and keeps the guest usable.
-      Desktop routes `window.open` through `shell.openExternal`, so a tab and a window are the
-      browser's choice, not the plugin's.
+- [ ] **Open in new window** asks the default browser for a real window. The first use shows
+      the macOS Automation prompt; approve it and a new window opens on the target.
+- [ ] Deny the prompt (or use a browser without window scripting): the target opens in a
+      browser tab and the top bar says the window could not be opened.
+- [ ] **Open in browser** always hands the target to the system browser and keeps the guest
+      usable; Desktop routes `window.open` through `shell.openExternal`.
 - [ ] **Back to default** destroys the guest, releases the lease, restores focus, and the host
       session (scroll position, open panel) is intact.
 - [ ] Repeat select/back three times; each run acquires a new lease and leaves no duplicate
@@ -97,8 +102,10 @@ rows on Windows when available. Use two profiles, one of them in a sibling home.
 
 ### Profile management
 
-- [ ] **New profile** opens the inline form focused on the name field; an invalid name keeps
-      **Create** disabled; creating `lab` closes the form and lists `lab` under the current home.
+- [ ] **New profile** opens a centered dialog focused on the name field; an invalid name keeps
+      **Create** disabled; creating `lab` closes the dialog and lists `lab` under the current home.
+- [ ] The dialog closes on Escape, **Cancel**, and a click on the scrim; Tab stays inside it.
+- [ ] The menu no longer shows a hint line under the profile rows.
 - [ ] `~/.dsh/profiles/lab` now holds `package.json`, `cordis.patch.yml`, and
       `pnpm-workspace.yaml`; `lab` starts and embeds like any other profile.
 - [ ] Creating the same name again reports that the profile exists; creating `desktop`

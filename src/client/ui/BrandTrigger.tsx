@@ -4,8 +4,9 @@ import { useStoreValue } from '../store'
 import { Wordmark } from './Wordmark'
 
 /**
- * Sidebar brand occupant: the official wordmark plus the active profile, acting as
- * the menu trigger. Only this button is clickable; the wordmark is `aria-hidden`.
+ * Sidebar brand occupant: the official wordmark on the left and the profile dropdown on
+ * the right, mirroring the product-name + action layout of the shipped header. Only the
+ * pill is interactive; the wordmark is `aria-hidden`.
  */
 export function BrandTrigger() {
   const { store, controller } = useRuntime()
@@ -29,10 +30,11 @@ export function BrandTrigger() {
 
   return (
     <span className="dps-brandWrap">
+      <Wordmark height={16} className="dps-brandWordmark" />
       <button
         ref={triggerRef}
         type="button"
-        className={menuOpen ? 'dps-brand dps-brandOpen' : 'dps-brand'}
+        className={menuOpen ? 'dps-brandPill dps-brandPillOpen' : 'dps-brandPill'}
         title={translate('button.tip')}
         aria-label={label}
         aria-haspopup="menu"
@@ -49,7 +51,6 @@ export function BrandTrigger() {
           openMenu()
         }}
       >
-        <Wordmark height={16} className="dps-brandWordmark" />
         <span className="dps-brandProfile">{name}</span>
         <span className="dps-brandChev" aria-hidden="true">
           ▾

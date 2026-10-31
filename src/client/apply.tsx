@@ -9,6 +9,7 @@ import { createStore } from './store'
 import { INITIAL_STATE } from './state'
 import { STYLES } from './styles'
 import { BrandTrigger } from './ui/BrandTrigger'
+import { CreateProfileDialog } from './ui/CreateProfileDialog'
 import { EmbedSurface } from './ui/EmbedSurface'
 import { ErrorBoundary } from './ui/ErrorBoundary'
 import { ProfileMenu } from './ui/ProfileMenu'
@@ -24,7 +25,7 @@ function focusTrigger(): void {
 /**
  * Mount the Client half.
  *
- * Locale dictionaries, the stylesheet, the controller lifetime, and the three slot
+ * Locale dictionaries, the stylesheet, the controller lifetime, and the four slot
  * registrations are all context-owned effects, so disabling or reloading the plugin
  * removes them.
  *
@@ -70,6 +71,7 @@ export function apply(ctx: ClientContext): void {
 
   const BrandSlot = slot(BrandTrigger)
   const MenuSlot = slot(ProfileMenu)
+  const DialogSlot = slot(CreateProfileDialog)
   const EmbedSlot = slot(EmbedSurface)
 
   // The shipped brand occupant registers at priority 0; replacing it is a deliberate
@@ -100,5 +102,14 @@ export function apply(ctx: ClientContext): void {
         EmbedSlot,
       ),
     'profile-switcher: embed surface',
+  )
+  ctx.slots.inject(
+    'shell.overlay',
+    () =>
+      ctx.slots.register(
+        { name: 'shell.overlay', id: 'profile-switcher-create', order: 1450, locale: NS },
+        DialogSlot,
+      ),
+    'profile-switcher: create dialog',
   )
 }

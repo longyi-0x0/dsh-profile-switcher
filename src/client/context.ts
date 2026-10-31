@@ -6,7 +6,7 @@ export interface SlotProps {
   t?: Translate
 }
 
-/** Registration options used by the three slots this plugin occupies. */
+/** Registration options used by the four slots this plugin occupies. */
 export interface SlotRegistrationOptions {
   name: string
   id?: string

@@ -90,35 +90,12 @@ describe('ProfileMenu', () => {
     expect(runtime.api.open).toHaveBeenCalledWith(HOME, 'web', expect.anything())
   })
 
-  it('creates a profile from the inline form', async () => {
+  it('hands profile creation to the dialog and closes the menu', () => {
     const runtime = openMenu()
     fireEvent.click(runtime.getByRole('menuitem', { name: 'New profile' }))
-    const input = runtime.getByRole('textbox', { name: 'Profile name' })
-    expect(document.activeElement).toBe(input)
-
-    fireEvent.change(input, { target: { value: 'lab' } })
-    fireEvent.click(runtime.getByRole('button', { name: 'Create' }))
-    await waitFor(() => expect(runtime.api.create).toHaveBeenCalledWith(HOME, 'lab'))
-    await waitFor(() => expect(runtime.queryByRole('textbox')).toBeNull())
-  })
-
-  it('keeps creation disabled for an invalid name', () => {
-    const runtime = openMenu()
-    fireEvent.click(runtime.getByRole('menuitem', { name: 'New profile' }))
-    const create = runtime.getByRole('button', { name: 'Create' }) as HTMLButtonElement
-    expect(create.disabled).toBe(true)
-    fireEvent.change(runtime.getByRole('textbox'), { target: { value: '--bad' } })
-    expect(create.disabled).toBe(true)
-    fireEvent.change(runtime.getByRole('textbox'), { target: { value: 'lab' } })
-    expect(create.disabled).toBe(false)
-  })
-
-  it('closes the form on Escape without closing the menu', () => {
-    const runtime = openMenu()
-    fireEvent.click(runtime.getByRole('menuitem', { name: 'New profile' }))
-    fireEvent.keyDown(runtime.getByRole('menu'), { key: 'Escape' })
+    expect(runtime.store.getSnapshot().menuOpen).toBe(false)
+    expect(runtime.store.getSnapshot().createOpen).toBe(true)
     expect(runtime.queryByRole('textbox')).toBeNull()
-    expect(runtime.store.getSnapshot().menuOpen).toBe(true)
   })
 
   it('deletes a profile after a second confirmation click', async () => {
