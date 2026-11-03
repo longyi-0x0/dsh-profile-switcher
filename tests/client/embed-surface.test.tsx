@@ -28,6 +28,26 @@ describe('EmbedSurface', () => {
     expect(runtime.api.stop).toHaveBeenCalledWith(TARGET.home, TARGET.name)
   })
 
+  it('puts the bar in its own row below a Windows caption', () => {
+    const root = document.documentElement
+    root.dataset.platform = 'win32'
+    root.dataset.windowsTitlebar = ''
+    try {
+      const runtime = createTestRuntime({
+        state: { phase: 'starting', target: TARGET },
+      })
+      const view = runtime.render(<EmbedSurface />)
+      const surface = view.container.querySelector('.dps-embed') as HTMLElement
+      expect(surface.style.getPropertyValue('--dps-caption')).toBe('40px')
+      expect(surface.style.getPropertyValue('--dps-inset')).toBe('40px')
+      const bar = view.container.querySelector('.dps-topbar') as HTMLElement
+      expect(bar.style.height).toBe('40px')
+    } finally {
+      delete root.dataset.platform
+      delete root.dataset.windowsTitlebar
+    }
+  })
+
   it('shows a localized error card and retries', async () => {
     const runtime = createTestRuntime({
       state: {

@@ -136,6 +136,9 @@ rows on Windows when available. Use two profiles, one of them in a sibling home.
 - [ ] Launch with `logLevel: debug`; the log contains origins but no `token=` or full URL.
 - [ ] macOS traffic lights and Windows titlebar buttons remain usable; the overlay bar is
       draggable and its buttons are not.
+- [ ] On Windows the bar sits in its own row below the Desktop caption: the menu text and
+      the minimize/maximize/close buttons stay clear and clickable, nothing overlaps, and
+      the guest starts below the bar.
 - [ ] Fullscreen toggling (green button) updates the top inset without a reload.
 - [ ] Light and dark themes; sidebar expanded; rail hides the brand slot as documented.
 

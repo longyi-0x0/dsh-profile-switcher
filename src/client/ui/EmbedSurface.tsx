@@ -3,7 +3,7 @@ import { errorMessage } from '../i18n'
 import { useRuntime, useTranslate } from '../runtime'
 import { useStoreValue } from '../store'
 import { disposeGuest, mountGuest, type MountedGuest } from '../embed'
-import { computeTopbarLayout, readPlatform, readTopInset } from '../insets'
+import { computeTopbarLayout, readPlatform, readTopInset, readWindowsChrome } from '../insets'
 import { openExternalUrl, readBrowserBridge } from '../open-external'
 import { Spinner } from './Spinner'
 
@@ -103,14 +103,18 @@ export function EmbedSurface() {
   if (!active) return null
 
   const name = target?.name ?? ''
-  const layout = computeTopbarLayout(inset, readPlatform())
-  const containerStyle = { '--dps-inset': `${inset}px` } as CSSProperties
+  const layout = computeTopbarLayout(inset, readPlatform(), readWindowsChrome())
+  const containerStyle = {
+    '--dps-caption': `${layout.caption}px`,
+    '--dps-inset': `${layout.content}px`,
+  } as CSSProperties
   const topbarStyle: CSSProperties = {
     top: layout.floating ? '8px' : '0px',
-    height: layout.floating ? '30px' : `${inset}px`,
+    height: `${layout.height}px`,
     paddingLeft: `${layout.leading}px`,
     paddingRight: `${layout.trailing}px`,
     background: layout.floating ? 'transparent' : 'var(--dsw-alias-bg-base)',
+    borderBottom: layout.caption > 0 ? '0.5px solid var(--dsw-alias-border-l1)' : 'none',
   }
   const errorText = errorCode === null ? '' : errorMessage(translate, errorCode)
 

@@ -37,6 +37,11 @@ All notable changes to this project are documented here. The format follows
 
 - The sidebar brand slot showed the fallback label until the menu was opened, because the
   active profile name only arrived with the menu's `/list` request.
+- On Windows the overlay bar was painted into the Desktop caption row, so the back button
+  and the external action overlapped the app menu and the window buttons. The bar now
+  occupies its own row below the caption (the `data-windows-titlebar` marker plus
+  `--dsh-frame-top-clearance`), and the guest starts below it; macOS and the browser
+  fallback keep their current placement.
 
 ### Security
 

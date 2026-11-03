@@ -61,7 +61,7 @@ Client controller: open → poll status → lease webview → loadURL(token URL)
 | `controller.ts`              | Menu and overlay state machine; abortable start/poll; heartbeats; retry/return; web fallback.                                       |
 | `api.ts`                     | Typed fetch client: same-origin credentials, no-store, abort support, error-code mapping.                                           |
 | `embed.ts`                   | Leased `<webview>` lifecycle: official attributes, `loadURL` after `dom-ready`, timeouts, aborted-load retry, exactly-once release. |
-| `insets.ts`                  | Reads the Host top clearance, computes platform insets for the overlay bar.                                                         |
+| `insets.ts`                  | Reads the Host top clearance and caption marker, places the bar (macOS strip, Windows row below the caption, floating pills).       |
 | `ui/menu-position.ts`        | Anchored placement with flipping and viewport clamping.                                                                             |
 | `ui/BrandTrigger.tsx`        | Brand slot occupant: wordmark + active profile; menu toggle and keyboard entry.                                                     |
 | `ui/ProfileMenu.tsx`         | Grouped rows, diagnostics, states, roving focus, outside-click close, two-step delete.                                              |

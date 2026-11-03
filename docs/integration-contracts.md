@@ -89,12 +89,20 @@ When you touch one of these contracts, update this table and add or amend an ADR
 
 - **Fact**: colors come from `--dsw-alias-*`; the Host exposes
   `--dsh-frame-top-clearance`, `document.documentElement.dataset.platform`, and
-  `data-fullscreen` for window-chrome-aware positioning.
-- **Evidence**: `@deepseek-ai/dsh-client-ui-layout` (`--dsh-frame-top-clearance`) and the Desktop preload
-  (`markDocumentPlatform`, `syncWindowFullscreen` in `lib/preload-app.cjs`).
+  `data-fullscreen` for window-chrome-aware positioning. Only macOS sets
+  `dataset.platform`; Windows sets the `data-windows-titlebar` attribute instead
+  (`--dsh-windows-titlebar-height`, 40 px) and renders its own caption row there —
+  the Desktop menu plus the native window buttons. The macOS reserved strip is empty
+  apart from the traffic lights.
+- **Evidence**: `@deepseek-ai/dsh-client-ui-layout` (`--dsh-frame-top-clearance`),
+  `@deepseek-ai/dsh-client-ui-sidebar` (Windows caption rules), and the Desktop preload
+  (`markDocumentPlatform`, `windowsTitlebar`, `syncWindowFullscreen` in
+  `lib/preload-app.cjs`).
 - **Plugin use**: `src/client/styles.ts`, `src/client/insets.ts`.
 - **If it changes**: a renamed token degrades appearance but never breaks rendering; a
-  missing clearance variable falls back to 48 px on macOS and 40 px on Windows.
+  missing clearance variable falls back to 48 px on macOS and 40 px on Windows. A missing
+  `data-windows-titlebar` marker puts the bar back into the caption row, where it
+  collides with the Desktop menu.
 
 ## 8. Cordis Host/Client context
 
